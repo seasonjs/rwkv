@@ -4,14 +4,13 @@
 package rwkv
 
 import (
-	"github.com/sugarme/tokenizer"
 	"os"
 	"strings"
 )
 
 type RwkvModel struct {
 	cRwkv      CRwkv
-	tokenizer  *tokenizer.Tokenizer
+	tokenizer  Tokenizer
 	dylibPath  string
 	ctx        *RwkvCtx
 	options    *RwkvOptions
@@ -19,11 +18,12 @@ type RwkvModel struct {
 }
 
 type RwkvOptions struct {
-	printError  bool
-	maxTokens   int
-	stopString  string
-	temperature float32
-	topP        float32
+	printError    bool
+	maxTokens     int
+	stopString    string
+	temperature   float32
+	topP          float32
+	tokenizerType TokenizerType
 }
 
 func hasCtx(ctx *RwkvCtx) error {
@@ -55,8 +55,16 @@ func NewRwkvModel(dylibPath string, options RwkvOptions) (*RwkvModel, error) {
 		return nil, err
 	}
 
-	// TODO: support word tokenizer
-	tk, err := NormalTokenizer()
+	var tk Tokenizer
+
+	if options.tokenizerType == Normal {
+		tk, err = NewNormalTokenizer()
+	}
+
+	if options.tokenizerType == World {
+		tk, err = NewWordLevelTokenizer()
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -146,12 +154,11 @@ func (s *RwkvState) PredictStream(input string, output chan string) {
 }
 
 func (s *RwkvState) handelInput(input string) error {
-	in := tokenizer.NewSingleEncodeInput(tokenizer.NewInputSequence(input))
-	encode, err := s.rwkvModel.tokenizer.Encode(in, false)
+	encode, err := s.rwkvModel.tokenizer.Encode(input)
 	if err != nil {
 		return err
 	}
-	for _, token := range encode.Ids {
+	for _, token := range encode {
 		err = s.rwkvModel.cRwkv.RwkvEval(s.rwkvModel.ctx, uint32(token), s.state, s.state, s.logits)
 		if err != nil {
 			return err
@@ -174,7 +181,7 @@ func (s *RwkvState) generateResponse(callback func(s string) bool) (string, erro
 			return "", err
 		}
 
-		chars := s.rwkvModel.tokenizer.Decode([]int{token}, false)
+		chars := s.rwkvModel.tokenizer.Decode([]int{token})
 		responseText += chars
 		if callback != nil && !callback(chars) {
 			break
