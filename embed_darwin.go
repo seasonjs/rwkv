@@ -5,7 +5,10 @@
 
 package rwkv
 
-import _ "embed" // Needed for go:embed
+import (
+	_ "embed" // Needed for go:embed
+	"runtime"
+)
 
 //go:embed deps/darwin/librwkv_x86.dylib
 var libRwkvAmd64 []byte

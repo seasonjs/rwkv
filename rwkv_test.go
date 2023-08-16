@@ -9,7 +9,7 @@ import (
 func getLibrary() string {
 	switch runtime.GOOS {
 	case "darwin":
-		return "./deps/darwin/librwkv_x86.dylib"
+		return "./deps/darwin/librwkv_arm64.dylib"
 	case "linux":
 		return "./deps/linux/librwkv.so"
 	case "windows":
@@ -37,16 +37,17 @@ func TestRwkvModel(t *testing.T) {
 		}
 	}(rwkv)
 
-	rwkv.LoadFromFile("./data/tiny-rwkv-660K-FP16.bin", 2)
+	rwkv.LoadFromFile("./data/rwkv-169M.bin", 2)
 	t.Run("test predit", func(t *testing.T) {
 		ctx, err := rwkv.InitState()
 		if err != nil {
 			t.Error(err)
 		}
-		out, err := ctx.Predict("hello ")
+		out, err := ctx.Predict("hello world")
 		if err != nil {
-			t.Error(err)
+			t.Error(err.Error())
 		}
+		t.Log(out)
 		assert(t, len(out) >= 0)
 	})
 
@@ -57,13 +58,11 @@ func TestRwkvModel(t *testing.T) {
 		}
 		responseText := ""
 		msg := make(chan string)
-		ctx.PredictStream("hello ", msg)
-		if err != nil {
-			t.Error(err)
-		}
+		ctx.PredictStream("hello world", msg)
 		for value := range msg {
 			responseText += value
 		}
+		t.Log(responseText)
 		assert(t, len(responseText) >= 0)
 	})
 }
@@ -87,7 +86,7 @@ func TestAutoLoad(t *testing.T) {
 		}
 	}(rwkv)
 
-	rwkv.LoadFromFile("./data/tiny-rwkv-660K-FP16.bin", 2)
+	rwkv.LoadFromFile("./data/rwkv-169M.bin", 2)
 
 	t.Run("test predict", func(t *testing.T) {
 		ctx, err := rwkv.InitState()
@@ -96,8 +95,9 @@ func TestAutoLoad(t *testing.T) {
 		}
 		out, err := ctx.Predict("hello ")
 		if err != nil {
-			t.Error(err)
+			t.Error(err.Error())
 		}
+		t.Log(out)
 		assert(t, len(out) >= 0)
 	})
 
@@ -115,6 +115,7 @@ func TestAutoLoad(t *testing.T) {
 		for value := range msg {
 			responseText += value
 		}
+		t.Log(responseText)
 		assert(t, len(responseText) >= 0)
 	})
 
