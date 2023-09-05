@@ -166,7 +166,7 @@ type CRwkvImpl struct {
 	cRwkvGetSystemInfoString func() string
 }
 
-func NewCRwkv() (*CRwkvImpl, error) {
+func NewCRwkv(libraryPath string) (*CRwkvImpl, error) {
 	libRwkv, err := openLibrary(libraryPath)
 	if err != nil {
 		return nil, err

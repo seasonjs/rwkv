@@ -1,8 +1,6 @@
 package rwkv
 
 import (
-	"runtime"
-	"strings"
 	"testing"
 )
 
@@ -18,21 +16,8 @@ func assertNonNil(t *testing.T, obj any) {
 	}
 }
 
-func TestDllPath(t *testing.T) {
-	t.Log(libraryPath)
-	switch runtime.GOOS {
-	case "windows":
-		assert(t, strings.HasPrefix(libraryPath, "./deps/windows/rwkv_"))
-	case "darwin":
-		assert(t, strings.HasPrefix(libraryPath, "./deps/darwin/"))
-	case "linux":
-		assert(t, strings.HasPrefix(libraryPath, "./deps/linux/"))
-	}
-
-}
-
 func TestNewCRwkv(t *testing.T) {
-	rwkv, err := NewCRwkv()
+	rwkv, err := NewCRwkv("./deps/windows/rwkv_avx_x64.dll")
 	if err != nil {
 		t.Error(err)
 	}
