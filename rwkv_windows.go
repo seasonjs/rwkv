@@ -10,17 +10,18 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-var path = "./deps/windows/rwkv.dll"
+var libraryPath = "./deps/windows/rwkv_avx_x64.dll"
 
-func Init() {
+func init() {
+
 	if cpu.X86.HasAVX {
-		path = "./deps/windows/rwkv_avx.dll"
+		libraryPath = "./deps/windows/rwkv_avx_x64.dll"
 	}
 	if cpu.X86.HasAVX2 {
-		path = "./deps/windows/rwkv_avx2.dll"
+		libraryPath = "./deps/windows/rwkv_avx2_x64.dll"
 	}
 	if cpu.X86.HasAVX512 {
-		path = "./deps/windows/rwkv_avx512.dll"
+		libraryPath = "./deps/windows/rwkv_avx512_x64.dll"
 	}
 }
 

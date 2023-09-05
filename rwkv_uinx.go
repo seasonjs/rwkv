@@ -9,7 +9,7 @@ import (
 	"github.com/ebitengine/purego"
 )
 
-var path = "./deps/darwin/librwkv.dylib"
+var libraryPath = "./deps/darwin/librwkv.dylib"
 
 func openLibrary(name string) (uintptr, error) {
 	return purego.Dlopen(name, purego.RTLD_NOW|purego.RTLD_GLOBAL)
