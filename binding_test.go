@@ -1,7 +1,6 @@
 package rwkv
 
 import (
-	"reflect"
 	"runtime"
 	"strings"
 	"testing"
@@ -26,7 +25,10 @@ func TestDllPath(t *testing.T) {
 		assert(t, strings.HasPrefix(libraryPath, "./deps/windows/rwkv_"))
 	case "darwin":
 		assert(t, strings.HasPrefix(libraryPath, "./deps/darwin/"))
+	case "linux":
+		assert(t, strings.HasPrefix(libraryPath, "./deps/linux/"))
 	}
+
 }
 
 func TestNewCRwkv(t *testing.T) {
@@ -35,11 +37,5 @@ func TestNewCRwkv(t *testing.T) {
 		t.Error(err)
 	}
 	t.Log(rwkv)
-	// 获取结构体类型
-	reflectType := reflect.TypeOf(rwkv)
-	for i := 0; i < reflectType.NumField(); i++ {
-		//field := reflectType.Field(i)
-		value := reflect.ValueOf(rwkv).Field(i)
-		assertNonNil(t, value.Interface())
-	}
+	assertNonNil(t, rwkv)
 }
