@@ -10,11 +10,11 @@ import (
 	"runtime"
 )
 
-var libraryPath = "./deps/darwin/librwkv_x86.dylib"
+var libraryPath = "deps/darwin/librwkv_x86.dylib"
 
 func init() {
 	if runtime.GOARCH == "arm64" {
-		libraryPath = "./deps/darwin/librwkv_arm64.dylib"
+		libraryPath = "deps/darwin/librwkv_arm64.dylib"
 	}
 }
 
