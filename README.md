@@ -21,7 +21,7 @@ To ship a working program that includes this AI, you will need to include the fo
 
 * librwkv.dylib / librwkv.so / rwkv.dll
 * the model file
-* the tokenizer file
+* the tokenizer file (build in)
 
 ## Thanks
 
