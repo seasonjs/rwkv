@@ -42,6 +42,7 @@ const cRwkvGetSystemInfoString = "rwkv_get_system_info_string"
 type RwkvCtx struct {
 	ctx uintptr
 }
+
 type CRwkv interface {
 	// RwkvSetPrintErrors Sets whether errors are automatically printed to stderr.
 	// If this is set to false, you are responsible for calling rwkv_last_error manually if an operation fails.
