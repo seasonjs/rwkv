@@ -7,20 +7,28 @@ import (
 	"testing"
 )
 
-func assert(t *testing.T, con bool) {
+func assert(t *testing.T, con bool, message ...string) {
 	if !con {
-		t.Error("fail with here, result is false")
+		if len(message) == 0 {
+			t.Error("fail with here, result is false")
+		} else {
+			t.Error(message)
+		}
 	}
 }
 
-func assertNonNil(t *testing.T, obj any) {
+func assertNonNil(t *testing.T, obj any, message ...string) {
 	if obj == nil {
-		t.Error("fail with here, obj is nil")
+		if len(message) == 0 {
+			t.Error("fail with here, obj is nil")
+		} else {
+			t.Error(message)
+		}
 	}
 }
 
 func TestNewCRwkv(t *testing.T) {
-	rwkv, err := NewCRwkv("./deps/windows/rwkv_avx_x64.dll")
+	rwkv, err := NewCRwkv(getLibrary())
 	if err != nil {
 		t.Error(err)
 	}

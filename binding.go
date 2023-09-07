@@ -5,6 +5,7 @@ package rwkv
 
 import (
 	"github.com/ebitengine/purego"
+	"unsafe"
 )
 
 type QuantizedFormat string
@@ -50,21 +51,21 @@ type CRwkv interface {
 	//   If NULL, affects model load (rwkv_init_from_file) and quantization (rwkv_quantize_model_file) errors,
 	//   as well as the default for new context.
 	// - print_errors: whether error messages should be automatically printed.
-	RwkvSetPrintErrors(ctx RwkvCtx, enable bool)
+	RwkvSetPrintErrors(ctx *RwkvCtx, enable bool)
 
 	// RwkvGetPrintErrors Gets whether errors are automatically printed to stderr.
 	// - ctx: the context to retrieve the setting for, or NULL for the global setting.
-	RwkvGetPrintErrors(ctx RwkvCtx) bool
+	RwkvGetPrintErrors(ctx *RwkvCtx) bool
 
 	// RwkvGetLastError Retrieves and clears the error flags.
 	// - ctx: the context the retrieve the error for, or NULL for the global error.
-	RwkvGetLastError(ctx RwkvCtx) error
+	RwkvGetLastError(ctx *RwkvCtx) error
 
 	// RwkvInitFromFile Loads the model from a file and prepares it for inference.
 	// Returns NULL on any error.
 	// - model_file_path: path to model file in ggml format.
 	// - n_threads: count of threads to use, must be positive.
-	RwkvInitFromFile(filePath string, threads uint32) RwkvCtx
+	RwkvInitFromFile(filePath string, threads uint32) *RwkvCtx
 
 	// RwkvCloneContext Creates a new context from an existing one.
 	// This can allow you to run multiple rwkv_eval's in parallel, without having to load a single model multiple times.
@@ -72,11 +73,11 @@ type CRwkv interface {
 	// Every rwkv_context must be freed using rwkv_free.
 	// - ctx: context to be cloned.
 	// - n_threads: count of threads to use, must be positive.
-	RwkvCloneContext(ctx RwkvCtx, threads uint32) RwkvCtx
+	RwkvCloneContext(ctx *RwkvCtx, threads uint32) *RwkvCtx
 
 	// RwkvGpuOffloadLayers Offloads specified layers of context onto GPU using cuBLAS, if it is enabled.
 	// If rwkv.cpp was compiled without cuBLAS support, this function is a no-op.
-	RwkvGpuOffloadLayers(ctx RwkvCtx, nGpuLayers uint32) error
+	RwkvGpuOffloadLayers(ctx *RwkvCtx, nGpuLayers uint32) error
 
 	// RwkvEval Evaluates the model for a single token.
 	// Not thread-safe. For parallel inference, call rwkv_clone_context to create one rwkv_context for each thread.
@@ -85,7 +86,7 @@ type CRwkv interface {
 	// - state_in: FP32 buffer of size rwkv_get_state_len(); or NULL, if this is a first pass.
 	// - state_out: FP32 buffer of size rwkv_get_state_len(). This buffer will be written to if non-NULL.
 	// - logits_out: FP32 buffer of size rwkv_get_logits_len(). This buffer will be written to if non-NULL.
-	RwkvEval(ctx RwkvCtx, token uint32, stateIn []float32, stateOut []float32, logitsOut []float32) error
+	RwkvEval(ctx *RwkvCtx, token uint32, stateIn []float32, stateOut []float32, logitsOut []float32) error
 
 	// RwkvEvalSequence Evaluates the model for a sequence of tokens.
 	// Uses a faster algorithm than rwkv_eval if you do not need the state and logits for every token. Best used with batch sizes of 64 or so.
@@ -97,37 +98,37 @@ type CRwkv interface {
 	// - state_in: FP32 buffer of size rwkv_get_state_len(), or NULL if this is a first pass.
 	// - state_out: FP32 buffer of size rwkv_get_state_len(). This buffer will be written to if non-NULL.
 	// - logits_out: FP32 buffer of size rwkv_get_logits_len(). This buffer will be written to if non-NULL.
-	RwkvEvalSequence(ctx RwkvCtx, token uint32, sequenceLen uint64, stateIn []float32, stateOut []float32, logitsOut []float32) error
+	RwkvEvalSequence(ctx *RwkvCtx, token uint32, sequenceLen uint64, stateIn []float32, stateOut []float32, logitsOut []float32) error
 
 	// RwkvGetNVocab Returns the number of tokens in the given model's vocabulary.
 	// Useful for telling 20B_tokenizer models (n_vocab = 50277) apart from World models (n_vocab = 65536).
-	RwkvGetNVocab(ctx RwkvCtx) uint64
+	RwkvGetNVocab(ctx *RwkvCtx) uint64
 
 	// RwkvGetNEmbedding Returns the number of elements in the given model's embedding.
 	// Useful for reading individual fields of a model's hidden state.
-	RwkvGetNEmbedding(ctx RwkvCtx) uint64
+	RwkvGetNEmbedding(ctx *RwkvCtx) uint64
 
 	// RwkvGetNLayer Returns the number of layers in the given model.
 	// Useful for always offloading the entire model to GPU.
-	RwkvGetNLayer(ctx RwkvCtx) uint64
+	RwkvGetNLayer(ctx *RwkvCtx) uint64
 
 	// RwkvGetStateLength Returns the number of float elements in a complete state for the given model.
 	// This is the number of elements you'll need to allocate for a call to rwkv_eval, rwkv_eval_sequence, or rwkv_init_state.
-	RwkvGetStateLength(ctx RwkvCtx) uint64
+	RwkvGetStateLength(ctx *RwkvCtx) uint64
 
 	// RwkvGetLogitsLength Returns the number of float elements in the logits output of a given model.
 	// This is currently always identical to n_vocab.
-	RwkvGetLogitsLength(ctx RwkvCtx) uint64
+	RwkvGetLogitsLength(ctx *RwkvCtx) uint64
 
 	// RwkvInitState Initializes the given state so that passing it to rwkv_eval or rwkv_eval_sequence would be identical to passing NULL.
 	// Useful in cases where tracking the first call to these functions may be annoying or expensive.
 	// State must be initialized for behavior to be defined, passing a zeroed state to rwkv.cpp functions will result in NaNs.
 	// - state: FP32 buffer of size rwkv_get_state_len() to initialize
-	RwkvInitState(ctx RwkvCtx, state []float32)
+	RwkvInitState(ctx *RwkvCtx, state []float32)
 
 	// RwkvFree Frees all allocated memory and the context.
 	// Does not need to be called on the same thread that created the rwkv_context.
-	RwkvFree(ctx RwkvCtx)
+	RwkvFree(ctx *RwkvCtx)
 
 	// RwkvQuantizeModelFile Quantizes FP32 or FP16 model to one of quantized formats.
 	// Returns false on any error. Error messages would be printed to stderr.
@@ -140,7 +141,7 @@ type CRwkv interface {
 	// - Q5_0
 	// - Q5_1
 	// - Q8_0
-	RwkvQuantizeModelFile(ctx RwkvCtx, in, out string, format QuantizedFormat) error
+	RwkvQuantizeModelFile(ctx *RwkvCtx, in, out string, format QuantizedFormat) error
 
 	// RwkvGetSystemInfoString Returns system information string.
 	RwkvGetSystemInfoString() string
@@ -154,14 +155,14 @@ type CRwkvImpl struct {
 	cRwkvInitFromFile        func(modelFilePath string, nThreads uint32) uintptr
 	cRwkvCloneContext        func(ctx uintptr, nThreads uint32) uintptr
 	cRwkvGpuOffloadLayers    func(ctx uintptr, nGpuLayers uint32) bool
-	cRwkvEval                func(ctx uintptr, token uint32, stateIn []float32, stateOut []float32, logitsOut []float32) bool
-	cRwkvEvalSequence        func(ctx uintptr, token uint32, sequenceLen uint64, stateIn []float32, stateOut []float32, logitsOut []float32) bool
+	cRwkvEval                func(ctx uintptr, token uint32, stateIn uintptr, stateOut uintptr, logitsOut uintptr) bool
+	cRwkvEvalSequence        func(ctx uintptr, token uint32, sequenceLen uint64, stateIn uintptr, stateOut uintptr, logitsOut uintptr) bool
 	cRwkvGetNVocab           func(ctx uintptr) uint64
 	cRwkvGetNEmbedding       func(ctx uintptr) uint64
 	cRwkvGetNLayer           func(ctx uintptr) uint64
 	cRwkvGetStateLength      func(ctx uintptr) uint64
 	cRwkvGetLogitsLength     func(ctx uintptr) uint64
-	cRwkvInitState           func(ctx uintptr, state []float32)
+	cRwkvInitState           func(ctx uintptr, state uintptr)
 	cRwkvFree                func(ctx uintptr)
 	cRwkvQuantizeModelFile   func(modelFilePathIn string, modelFilePathOut string, formatName string) bool
 	cRwkvGetSystemInfoString func() string
@@ -179,14 +180,14 @@ func NewCRwkv(libraryPath string) (*CRwkvImpl, error) {
 		rwkvInitFromFile        func(modelFilePath string, nThreads uint32) uintptr
 		rwkvCloneContext        func(ctx uintptr, nThreads uint32) uintptr
 		rwkvGpuOffloadLayers    func(ctx uintptr, nGpuLayers uint32) bool
-		rwkvEval                func(ctx uintptr, token uint32, stateIn []float32, stateOut []float32, logitsOut []float32) bool
-		rwkvEvalSequence        func(ctx uintptr, token uint32, sequenceLen uint64, stateIn []float32, stateOut []float32, logitsOut []float32) bool
+		rwkvEval                func(ctx uintptr, token uint32, stateIn uintptr, stateOut uintptr, logitsOut uintptr) bool
+		rwkvEvalSequence        func(ctx uintptr, token uint32, sequenceLen uint64, stateIn uintptr, stateOut uintptr, logitsOut uintptr) bool
 		rwkvGetNVocab           func(ctx uintptr) uint64
 		rwkvGetNEmbedding       func(ctx uintptr) uint64
 		rwkvGetNLayer           func(ctx uintptr) uint64
 		rwkvGetStateLength      func(ctx uintptr) uint64
 		rwkvGetLogitsLength     func(ctx uintptr) uint64
-		rwkvInitState           func(ctx uintptr, state []float32)
+		rwkvInitState           func(ctx uintptr, state uintptr)
 		rwkvFree                func(ctx uintptr)
 		rwkvQuantizeModelFile   func(modelFilePathIn string, modelFilePathOut string, formatName string) bool
 		rwkvGetSystemInfoString func() string
@@ -239,14 +240,16 @@ func NewCRwkv(libraryPath string) (*CRwkvImpl, error) {
 		cRwkvGetSystemInfoString: rwkvGetSystemInfoString,
 	}, nil
 }
-func (c *CRwkvImpl) RwkvSetPrintErrors(ctx RwkvCtx, enable bool) {
+
+func (c *CRwkvImpl) RwkvSetPrintErrors(ctx *RwkvCtx, enable bool) {
 	c.cRwkvSetPrintErrors(ctx.ctx, enable)
 }
-func (c *CRwkvImpl) RwkvGetPrintErrors(ctx RwkvCtx) bool {
+
+func (c *CRwkvImpl) RwkvGetPrintErrors(ctx *RwkvCtx) bool {
 	return c.cRwkvGetPrintErrors(ctx.ctx)
 }
 
-func (c *CRwkvImpl) RwkvGetLastError(ctx RwkvCtx) error {
+func (c *CRwkvImpl) RwkvGetLastError(ctx *RwkvCtx) error {
 	cErr := c.cRwkvGetLastError(ctx.ctx)
 	err := RwkvErrors(cErr)
 	if err == RwkvErrorNone {
@@ -255,17 +258,17 @@ func (c *CRwkvImpl) RwkvGetLastError(ctx RwkvCtx) error {
 	return err
 }
 
-func (c *CRwkvImpl) RwkvInitFromFile(filePath string, threads uint32) RwkvCtx {
+func (c *CRwkvImpl) RwkvInitFromFile(filePath string, threads uint32) *RwkvCtx {
 	ctx := c.cRwkvInitFromFile(filePath, threads)
-	return RwkvCtx{ctx: ctx}
+	return &RwkvCtx{ctx: ctx}
 }
 
-func (c *CRwkvImpl) RwkvCloneContext(ctx RwkvCtx, threads uint32) RwkvCtx {
+func (c *CRwkvImpl) RwkvCloneContext(ctx *RwkvCtx, threads uint32) *RwkvCtx {
 	newCtx := c.cRwkvCloneContext(ctx.ctx, threads)
-	return RwkvCtx{ctx: newCtx}
+	return &RwkvCtx{ctx: newCtx}
 }
 
-func (c *CRwkvImpl) RwkvGpuOffloadLayers(ctx RwkvCtx, nGpuLayers uint32) error {
+func (c *CRwkvImpl) RwkvGpuOffloadLayers(ctx *RwkvCtx, nGpuLayers uint32) error {
 	ok := c.cRwkvGpuOffloadLayers(ctx.ctx, nGpuLayers)
 	if !ok {
 		return c.RwkvGetLastError(ctx)
@@ -273,51 +276,51 @@ func (c *CRwkvImpl) RwkvGpuOffloadLayers(ctx RwkvCtx, nGpuLayers uint32) error {
 	return nil
 }
 
-func (c *CRwkvImpl) RwkvEval(ctx RwkvCtx, token uint32, stateIn []float32, stateOut []float32, logitsOut []float32) error {
-	ok := c.cRwkvEval(ctx.ctx, token, stateIn, stateOut, logitsOut)
+func (c *CRwkvImpl) RwkvEval(ctx *RwkvCtx, token uint32, stateIn []float32, stateOut []float32, logitsOut []float32) error {
+	ok := c.cRwkvEval(ctx.ctx, token, uintptr(unsafe.Pointer(&stateIn[0])), uintptr(unsafe.Pointer(&stateOut[0])), uintptr(unsafe.Pointer(&logitsOut[0])))
 	if !ok {
 		return c.RwkvGetLastError(ctx)
 	}
 	return nil
 }
 
-func (c *CRwkvImpl) RwkvEvalSequence(ctx RwkvCtx, token uint32, sequenceLen uint64, stateIn []float32, stateOut []float32, logitsOut []float32) error {
-	ok := c.cRwkvEvalSequence(ctx.ctx, token, sequenceLen, stateIn, stateOut, logitsOut)
+func (c *CRwkvImpl) RwkvEvalSequence(ctx *RwkvCtx, token uint32, sequenceLen uint64, stateIn []float32, stateOut []float32, logitsOut []float32) error {
+	ok := c.cRwkvEvalSequence(ctx.ctx, token, sequenceLen, uintptr(unsafe.Pointer(&stateIn[0])), uintptr(unsafe.Pointer(&stateOut[0])), uintptr(unsafe.Pointer(&logitsOut[0])))
 	if !ok {
 		return c.RwkvGetLastError(ctx)
 	}
 	return nil
 }
 
-func (c *CRwkvImpl) RwkvGetNVocab(ctx RwkvCtx) uint64 {
+func (c *CRwkvImpl) RwkvGetNVocab(ctx *RwkvCtx) uint64 {
 	return c.cRwkvGetNVocab(ctx.ctx)
 }
 
-func (c *CRwkvImpl) RwkvGetNEmbedding(ctx RwkvCtx) uint64 {
+func (c *CRwkvImpl) RwkvGetNEmbedding(ctx *RwkvCtx) uint64 {
 	return c.cRwkvGetNEmbedding(ctx.ctx)
 }
 
-func (c *CRwkvImpl) RwkvGetNLayer(ctx RwkvCtx) uint64 {
+func (c *CRwkvImpl) RwkvGetNLayer(ctx *RwkvCtx) uint64 {
 	return c.cRwkvGetNLayer(ctx.ctx)
 }
 
-func (c *CRwkvImpl) RwkvGetStateLength(ctx RwkvCtx) uint64 {
+func (c *CRwkvImpl) RwkvGetStateLength(ctx *RwkvCtx) uint64 {
 	return c.cRwkvGetStateLength(ctx.ctx)
 }
 
-func (c *CRwkvImpl) RwkvGetLogitsLength(ctx RwkvCtx) uint64 {
+func (c *CRwkvImpl) RwkvGetLogitsLength(ctx *RwkvCtx) uint64 {
 	return c.cRwkvGetLogitsLength(ctx.ctx)
 }
 
-func (c *CRwkvImpl) RwkvInitState(ctx RwkvCtx, state []float32) {
-	c.cRwkvInitState(ctx.ctx, state)
+func (c *CRwkvImpl) RwkvInitState(ctx *RwkvCtx, state []float32) {
+	c.cRwkvInitState(ctx.ctx, uintptr(unsafe.Pointer(&state[0])))
 }
 
-func (c *CRwkvImpl) RwkvFree(ctx RwkvCtx) {
+func (c *CRwkvImpl) RwkvFree(ctx *RwkvCtx) {
 	c.cRwkvFree(ctx.ctx)
 }
 
-func (c *CRwkvImpl) RwkvQuantizeModelFile(ctx RwkvCtx, in, out string, format QuantizedFormat) error {
+func (c *CRwkvImpl) RwkvQuantizeModelFile(ctx *RwkvCtx, in, out string, format QuantizedFormat) error {
 	ok := c.cRwkvQuantizeModelFile(in, out, string(format))
 	if !ok {
 		return c.RwkvGetLastError(ctx)
