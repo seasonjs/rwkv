@@ -12,9 +12,79 @@ rwkv.go is a wrapper around [rwkv-cpp](https://github.com/saharNooby/rwkv.cpp), 
 go get github.com/seasonjs/rwkv
 ```
 
-You may need to download dependencies (which called dynamic library), you can got it in release page, or get from `deps` folder.
+## Compatibility
+
+See `deps` folder for dylib compatibility, push request is welcome.
+
+| platform | x32         | x64                     | arm         |
+|----------|-------------|-------------------------|-------------|
+| windows  | not support | support avx2/avx512/avx | not support |
+| linux    | not support | support                 | not support |
+| darwin   | not support | support                 | support     |
 
 ## Usage
+
+You don't need to download rwkv dynamic library.
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/seasonjs/rwkv"
+)
+
+func main() {
+	model, err := rwkv.NewRwkvAutoModel(rwkv.RwkvOptions{
+		maxTokens:   100,
+		stopString:  "\n",
+		temperature: 0.8,
+		topP:        0.5,
+	})
+	if err != nil {
+		fmt.Print(err.Error())
+	}
+	defer func(rwkv *rwkv.RwkvModel) {
+		err := model.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(model)
+
+	model.LoadFromFile("./data/rwkv-110M-Q5.bin", 2)
+
+	// This context hold the logits and status, as well can int a new one.
+	ctx, err := model.InitState()
+	if err != nil {
+		fmt.Print(err.Error())
+	}
+	out, err := ctx.Predict("hello ")
+	if err != nil {
+		fmt.Print(err.Error())
+	}
+	fmt.Print(out)
+
+	// We can use `PredictStream` to generate response like `ChatGPT`
+
+	ctx1, err := model.InitState()
+	if err != nil {
+		fmt.Print(err.Error())
+	}
+	responseText := ""
+	msg := make(chan string)
+	ctx1.PredictStream("hello ", msg)
+	if err != nil {
+		fmt.Print(err.Error())
+	}
+	for value := range msg {
+		responseText += value
+	}
+	fmt.Print(responseText)
+}
+
+```
+
+If `NewRwkvAutoModel` can't automatic loading of dynamic library, please use `NewRwkvModel` method load manually.
 
 ```go
 package main
@@ -92,7 +162,7 @@ func main() {
 
 To ship a working program that includes this AI, you will need to include the following files:
 
-* librwkv.dylib / librwkv.so / rwkv.dll
+* librwkv.dylib / librwkv.so / rwkv.dll (build in)
 * the model file
 * the tokenizer file (build in)
 

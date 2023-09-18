@@ -5,15 +5,17 @@ package rwkv
 
 import (
 	"github.com/sugarme/tokenizer"
+	"os"
 	"strings"
 )
 
 type RwkvModel struct {
-	cRwkv     CRwkv
-	tokenizer *tokenizer.Tokenizer
-	dylibPath string
-	ctx       *RwkvCtx
-	options   *RwkvOptions
+	cRwkv      CRwkv
+	tokenizer  *tokenizer.Tokenizer
+	dylibPath  string
+	ctx        *RwkvCtx
+	options    *RwkvOptions
+	isAutoLoad bool
 }
 
 type RwkvOptions struct {
@@ -29,6 +31,22 @@ func hasCtx(ctx *RwkvCtx) error {
 		return RwkvErrors(RwkvErrorCtx)
 	}
 	return nil
+}
+
+func NewRwkvAutoModel(options RwkvOptions) (*RwkvModel, error) {
+	file, err := dumpRwkvLibrary()
+	if err != nil {
+		return nil, err
+	}
+
+	dylibPath := file.Name()
+
+	model, err := NewRwkvModel(dylibPath, options)
+	if err != nil {
+		return nil, err
+	}
+	model.isAutoLoad = true
+	return model, nil
 }
 
 func NewRwkvModel(dylibPath string, options RwkvOptions) (*RwkvModel, error) {
@@ -58,12 +76,26 @@ func (m *RwkvModel) LoadFromFile(path string, thread uint32) {
 	m.cRwkv.RwkvSetPrintErrors(ctx, m.options.printError)
 }
 
+func (m *RwkvModel) QuantizeModelFile(in, out string, format QuantizedFormat) error {
+	if err := hasCtx(m.ctx); err != nil {
+		return err
+	}
+	return m.cRwkv.RwkvQuantizeModelFile(m.ctx, in, out, format)
+}
+
 func (m *RwkvModel) Close() error {
 	if err := hasCtx(m.ctx); err != nil {
 		return err
 	}
-	m.cRwkv.RwkvFree(m.ctx)
+	if err := m.cRwkv.RwkvFree(m.ctx); err != nil {
+		return err
+	}
 	m.ctx = nil
+	if m.isAutoLoad {
+		err := os.Remove(m.dylibPath)
+		return err
+	}
+
 	return nil
 }
 

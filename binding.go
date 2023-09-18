@@ -128,7 +128,7 @@ type CRwkv interface {
 
 	// RwkvFree Frees all allocated memory and the context.
 	// Does not need to be called on the same thread that created the rwkv_context.
-	RwkvFree(ctx *RwkvCtx)
+	RwkvFree(ctx *RwkvCtx) error
 
 	// RwkvQuantizeModelFile Quantizes FP32 or FP16 model to one of quantized formats.
 	// Returns false on any error. Error messages would be printed to stderr.
@@ -316,8 +316,9 @@ func (c *CRwkvImpl) RwkvInitState(ctx *RwkvCtx, state []float32) {
 	c.cRwkvInitState(ctx.ctx, uintptr(unsafe.Pointer(&state[0])))
 }
 
-func (c *CRwkvImpl) RwkvFree(ctx *RwkvCtx) {
+func (c *CRwkvImpl) RwkvFree(ctx *RwkvCtx) error {
 	c.cRwkvFree(ctx.ctx)
+	return closeLibrary(c.libRwkv)
 }
 
 func (c *CRwkvImpl) RwkvQuantizeModelFile(ctx *RwkvCtx, in, out string, format QuantizedFormat) error {
