@@ -1,7 +1,7 @@
 package rwkv
 
 import (
-	"strings"
+	"strconv"
 	"testing"
 )
 
@@ -36,7 +36,7 @@ func TestNormalTokenizer(t *testing.T) {
 }
 
 func TestWorldTokenizer(t *testing.T) {
-	tk, err := NewWordLevelTokenizer()
+	tk, err := NewWorldTokenizer()
 	if err != nil {
 		t.Error(err)
 	}
@@ -58,15 +58,10 @@ func TestWorldTokenizer(t *testing.T) {
 
 func TestBytes(t *testing.T) {
 
-	a := []byte("\x00")
-	t.Log(len(a))
-
-	b := "'\x00'"
-	t.Log("b:", len(b))
-	d := strings.Trim(b, "'")
-	c := []byte(b)
-	t.Log("c", len(c))
-	t.Log("d", len(d))
-	t.Log("d bytes", len([]byte(d)))
-
+	bts := `\x00`
+	unquote, err := strconv.Unquote(bts)
+	if err != nil {
+		return
+	}
+	t.Log(unquote)
 }

@@ -62,7 +62,7 @@ func NewRwkvModel(dylibPath string, options RwkvOptions) (*RwkvModel, error) {
 	}
 
 	if options.tokenizerType == World {
-		tk, err = NewWordLevelTokenizer()
+		tk, err = NewWorldTokenizer()
 	}
 
 	if err != nil {
