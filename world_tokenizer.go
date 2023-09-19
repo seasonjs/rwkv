@@ -84,17 +84,17 @@ func NewWorldTokenizer() (*WorldTokenizer, error) {
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		line := scanner.Text()
-		caps := strings.Split(line, " ")
-		index, err := strconv.Atoi(caps[0])
+		fIndex := strings.Index(line, " ")
+		lIndex := strings.LastIndex(line, " ")
+		index, err := strconv.Atoi(line[:fIndex])
 		if err != nil {
 			return nil, err
 		}
-		rest := caps[1]
-		x, err := parseBytes(rest)
+		rest := line[fIndex+1 : lIndex]
+		token, err := parseBytes(rest)
 		if err != nil {
 			return nil, err
 		}
-		token := string(x)
 		wt.IndexToToken[index] = token
 		wt.TokenToIndex[token] = index
 		wt.Trie.Add(token, token)
@@ -108,33 +108,29 @@ func NewWorldTokenizer() (*WorldTokenizer, error) {
 }
 
 // EncodeBytes encodes bytes to tokens
-func (wt *WorldTokenizer) EncodeBytes(src []byte) []int {
+func (wt *WorldTokenizer) EncodeBytes(src []rune) []int {
 	var tokens []int
 	idx := 0
 	for idx < len(src) {
-		_idx := idx
 		matchedKey := wt.Trie.FindLongest(string(src[idx:]))
-		idx += len([]byte(matchedKey))
-		if idx == _idx {
-			panic("Invalid input")
-		}
+		idx += len(matchedKey)
 		tokens = append(tokens, wt.TokenToIndex[matchedKey])
 	}
 	return tokens
 }
 
 // DecodeBytes decodes tokens to bytes
-func (wt *WorldTokenizer) DecodeBytes(tokens []int) []byte {
-	result := []byte{}
+func (wt *WorldTokenizer) DecodeBytes(tokens []int) []rune {
+	var result []rune
 	for _, token := range tokens {
-		result = append(result, []byte(wt.IndexToToken[token])...)
+		result = append(result, []rune(wt.IndexToToken[token])...)
 	}
 	return result
 }
 
 // Encode encodes a string to tokens
 func (wt *WorldTokenizer) Encode(src string) ([]int, error) {
-	return wt.EncodeBytes([]byte(src)), nil
+	return wt.EncodeBytes([]rune(src)), nil
 }
 
 // Decode decodes tokens to a string
@@ -142,27 +138,32 @@ func (wt *WorldTokenizer) Decode(tokens []int) string {
 	return string(wt.DecodeBytes(tokens))
 }
 
-func parseBytes(s string) ([]byte, error) {
-	s = strings.TrimSpace(s)
-
-	if strings.HasPrefix(s, "'\\x") && strings.HasSuffix(s, "'") && len(s) > 2 {
-		// handle \x...
-		var bs []byte
-		caps := strings.Split(s, "\\x")
-		for _, cap := range caps {
-			unquoted, err := strconv.Unquote("\\x" + cap)
-			if err != nil {
-				return nil, err
-			}
-			bs = append(bs, []byte(unquoted)...)
-		}
-
-		return bs, nil
-	}
+func parseBytes(s string) (string, error) {
+	//s = strings.TrimSpace(s)
+	//if strings.HasPrefix(s, "'\\x") && strings.HasSuffix(s, "'") && len(s) > 2 {
+	//	// handle '\x...'
+	//	var bs []byte
+	//	s = strings.Trim(s, "'")
+	//	caps := strings.Split(s, "\\x")
+	//	for _, cap := range caps {
+	//		if len(cap) <= 0 {
+	//			continue
+	//		}
+	//		unquoted, err := strconv.Unquote("'\\x" + cap + "'")
+	//		if err != nil {
+	//			return nil, err
+	//		}
+	//		bs = append(bs, []byte(unquoted)...)
+	//	}
+	//
+	//	return bs, nil
+	//}
 	if strings.HasPrefix(s, "b'") && strings.HasSuffix(s, "'") && len(s) > 3 {
 		// handle b'...'
-		return []byte(s[2 : len(s)-1]), nil
+		return s[2 : len(s)-1], nil
 	}
-
-	return []byte(strings.Trim(s, "'")), nil
+	if len(s) <= 0 {
+		return "", nil
+	}
+	return s[1 : len(s)-1], nil
 }

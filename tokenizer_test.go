@@ -1,7 +1,6 @@
 package rwkv
 
 import (
-	"strconv"
 	"testing"
 )
 
@@ -57,11 +56,7 @@ func TestWorldTokenizer(t *testing.T) {
 }
 
 func TestBytes(t *testing.T) {
-
-	bts := `\x00`
-	unquote, err := strconv.Unquote(bts)
-	if err != nil {
-		return
-	}
-	t.Log(unquote)
+	cnBts := []byte("你")
+	cnRune := []rune("你")
+	t.Log(cnBts, cnRune)
 }
