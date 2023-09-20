@@ -174,6 +174,11 @@ To ship a working program that includes this AI, you will need to include the fo
 * the model file
 * the tokenizer file (buildin)
 
+## Low level API
+
+This package also provide low level Api which is same as [rwkv-cpp](https://github.com/saharNooby/rwkv.cpp).
+See detail at [rwkv-doc](https://pkg.go.dev/github.com/seasonjs/rwkv).
+
 ## Thanks
 
 * [rwkv-cpp](https://github.com/saharNooby/rwkv.cpp)
