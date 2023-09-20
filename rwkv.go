@@ -19,12 +19,12 @@ type RwkvModel struct {
 }
 
 type RwkvOptions struct {
-	printError    bool
-	maxTokens     int
-	stopString    string
-	temperature   float32
-	topP          float32
-	tokenizerType TokenizerType
+	PrintError    bool
+	MaxTokens     int
+	StopString    string
+	Temperature   float32
+	TopP          float32
+	TokenizerType TokenizerType
 }
 
 func hasCtx(ctx *RwkvCtx) error {
@@ -58,11 +58,11 @@ func NewRwkvModel(dylibPath string, options RwkvOptions) (*RwkvModel, error) {
 
 	var tk Tokenizer
 
-	if options.tokenizerType == Normal {
+	if options.TokenizerType == Normal {
 		tk, err = NewNormalTokenizer()
 	}
 
-	if options.tokenizerType == World {
+	if options.TokenizerType == World {
 		tk, err = NewWorldTokenizer()
 	}
 
@@ -86,7 +86,7 @@ func (m *RwkvModel) LoadFromFile(path string, thread uint32) error {
 	ctx := m.cRwkv.RwkvInitFromFile(path, thread)
 	m.ctx = ctx
 	// by default disable error printing and handle errors by go error
-	m.cRwkv.RwkvSetPrintErrors(ctx, m.options.printError)
+	m.cRwkv.RwkvSetPrintErrors(ctx, m.options.PrintError)
 	return nil
 }
 
@@ -175,9 +175,9 @@ func (s *RwkvState) handelInput(input string) error {
 
 func (s *RwkvState) generateResponse(callback func(s string) bool) (string, error) {
 	responseText := ""
-	for i := 0; i < s.rwkvModel.options.maxTokens; i++ {
+	for i := 0; i < s.rwkvModel.options.MaxTokens; i++ {
 
-		token, err := SampleLogits(s.logits, s.rwkvModel.options.temperature, s.rwkvModel.options.topP, map[int]float32{})
+		token, err := SampleLogits(s.logits, s.rwkvModel.options.Temperature, s.rwkvModel.options.TopP, map[int]float32{})
 		if err != nil {
 			return "", err
 		}
@@ -192,8 +192,8 @@ func (s *RwkvState) generateResponse(callback func(s string) bool) (string, erro
 		if callback != nil && !callback(chars) {
 			break
 		}
-		if strings.Contains(responseText, s.rwkvModel.options.stopString) {
-			responseText = strings.Split(responseText, s.rwkvModel.options.stopString)[0]
+		if strings.Contains(responseText, s.rwkvModel.options.StopString) {
+			responseText = strings.Split(responseText, s.rwkvModel.options.StopString)[0]
 			break
 		}
 	}

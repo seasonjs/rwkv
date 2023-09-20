@@ -20,10 +20,11 @@ func getLibrary() string {
 }
 func TestRwkvModel(t *testing.T) {
 	rwkv, err := NewRwkvModel(getLibrary(), RwkvOptions{
-		maxTokens:   100,
-		stopString:  "\n",
-		temperature: 0.8,
-		topP:        0.5,
+		MaxTokens:     100,
+		StopString:    "\n",
+		Temperature:   0.8,
+		TopP:          0.5,
+		TokenizerType: Normal, //or World
 	})
 
 	if err != nil {
@@ -74,10 +75,11 @@ func TestRwkvModel(t *testing.T) {
 
 func TestAutoLoad(t *testing.T) {
 	rwkv, err := NewRwkvAutoModel(RwkvOptions{
-		maxTokens:   100,
-		stopString:  "\n",
-		temperature: 0.8,
-		topP:        0.5,
+		MaxTokens:     100,
+		StopString:    "\n",
+		Temperature:   0.8,
+		TopP:          0.5,
+		TokenizerType: Normal, //or World
 	})
 
 	if err != nil {

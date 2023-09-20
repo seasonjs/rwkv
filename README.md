@@ -36,10 +36,11 @@ import (
 
 func main() {
 	model, err := rwkv.NewRwkvAutoModel(rwkv.RwkvOptions{
-		maxTokens:   100,
-		stopString:  "\n",
-		temperature: 0.8,
-		topP:        0.5,
+		MaxTokens:   100,
+		StopString:  "\n",
+		Temperature: 0.8,
+		TopP:        0.5,
+		TokenizerType: rwkv.Normal, //or World 
 	})
 	if err != nil {
 		fmt.Print(err.Error())
@@ -51,7 +52,10 @@ func main() {
 		}
 	}(model)
 
-	model.LoadFromFile("./data/rwkv-110M-Q5.bin", 2)
+	err = model.LoadFromFile("./data/rwkv-110M-Q5.bin", 2)
+	if err != nil {
+		fmt.Print(err.Error())
+	}
 
 	// This context hold the logits and status, as well can int a new one.
 	ctx, err := model.InitState()
@@ -110,10 +114,11 @@ func getLibrary() string {
 
 func main() {
 	model, err := rwkv.NewRwkvModel(getLibrary(), rwkv.RwkvOptions{
-		maxTokens:   100,
-		stopString:  "\n",
-		temperature: 0.8,
-		topP:        0.5,
+		MaxTokens:   100,
+		StopString:  "\n",
+		Temperature: 0.8,
+		TopP:        0.5,
+		TokenizerType: rwkv.Normal, //or World 
 	})
 	if err != nil {
 		fmt.Print(err.Error())
@@ -125,7 +130,10 @@ func main() {
 		}
 	}(model)
 
-	model.LoadFromFile("./data/rwkv-110M-Q5.bin", 2)
+	err = model.LoadFromFile("./data/rwkv-110M-Q5.bin", 2)
+	if err != nil {
+		fmt.Print(err.Error())
+	}
 
 	// This context hold the logits and status, as well can int a new one.
 	ctx, err := model.InitState()
@@ -162,9 +170,9 @@ func main() {
 
 To ship a working program that includes this AI, you will need to include the following files:
 
-* librwkv.dylib / librwkv.so / rwkv.dll (build in)
+* librwkv.dylib / librwkv.so / rwkv.dll (buildin)
 * the model file
-* the tokenizer file (build in)
+* the tokenizer file (buildin)
 
 ## Thanks
 
