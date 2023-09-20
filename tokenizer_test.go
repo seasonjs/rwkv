@@ -53,10 +53,17 @@ func TestWorldTokenizer(t *testing.T) {
 	t.Run("Test Japanese", func(t *testing.T) {
 		assertEncodeAndDecode(t, tk, seq3)
 	})
-}
-
-func TestBytes(t *testing.T) {
-	cnBts := []byte("你")
-	cnRune := []rune("你")
-	t.Log(cnBts, cnRune)
+	seq4 := "Привет, мир"
+	t.Run("Test Russian", func(t *testing.T) {
+		assertEncodeAndDecode(t, tk, seq4)
+	})
+	// rwkv_vocab_v20230424.txt not support Korean, such as `녕`
+	//seq5 := "안녕 세상"
+	//t.Run("Test Korean", func(t *testing.T) {
+	//	assertEncodeAndDecode(t, tk, seq5)
+	//})
+	seq6 := "、]) -> <|endoftext|><|padding|>"
+	t.Run("Test Special Characters", func(t *testing.T) {
+		assertEncodeAndDecode(t, tk, seq6)
+	})
 }

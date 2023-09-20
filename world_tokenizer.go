@@ -1,8 +1,13 @@
+// Copyright (c) seasonjs. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
 package rwkv
 
 import (
 	"bufio"
 	"embed"
+	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -30,9 +35,9 @@ func NewTrieNode() *TrieNode {
 }
 
 // Add inserts a key into the trie
-func (t *Trie) Add(key, val string) {
+func (t *Trie) Add(val string) {
 	node := t.Root
-	for _, ch := range key {
+	for _, ch := range []rune(val) {
 		char := string(ch)
 		if node.to[char] == nil {
 			node.to[char] = NewTrieNode()
@@ -43,9 +48,10 @@ func (t *Trie) Add(key, val string) {
 }
 
 // FindLongest finds the longest match in the trie for the given key
-func (t *Trie) FindLongest(key string) string {
+func (t *Trie) FindLongest(key []rune) string {
 	node := t.Root
-	pos, matchedKey := 0, ""
+	var matchedKey []rune
+	pos := 0
 	for i, ch := range key {
 		char := string(ch)
 		if node.to[char] == nil {
@@ -57,7 +63,7 @@ func (t *Trie) FindLongest(key string) string {
 			matchedKey = key[:pos]
 		}
 	}
-	return matchedKey
+	return string(matchedKey)
 }
 
 // WorldTokenizer represents a tokenizer for encoding and decoding bytes to tokens
@@ -97,7 +103,7 @@ func NewWorldTokenizer() (*WorldTokenizer, error) {
 		}
 		wt.IndexToToken[index] = token
 		wt.TokenToIndex[token] = index
-		wt.Trie.Add(token, token)
+		wt.Trie.Add(token)
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -108,15 +114,18 @@ func NewWorldTokenizer() (*WorldTokenizer, error) {
 }
 
 // EncodeBytes encodes bytes to tokens
-func (wt *WorldTokenizer) EncodeBytes(src []rune) []int {
+func (wt *WorldTokenizer) EncodeBytes(src []rune) ([]int, error) {
 	var tokens []int
 	idx := 0
 	for idx < len(src) {
-		matchedKey := wt.Trie.FindLongest(string(src[idx:]))
-		idx += len(matchedKey)
+		matchedKey := wt.Trie.FindLongest(src[idx:])
+		if len(matchedKey) <= 0 {
+			return nil, fmt.Errorf("can't encode current language: %s", string(src[idx:]))
+		}
+		idx += len([]rune(matchedKey))
 		tokens = append(tokens, wt.TokenToIndex[matchedKey])
 	}
-	return tokens
+	return tokens, nil
 }
 
 // DecodeBytes decodes tokens to bytes
@@ -130,7 +139,7 @@ func (wt *WorldTokenizer) DecodeBytes(tokens []int) []rune {
 
 // Encode encodes a string to tokens
 func (wt *WorldTokenizer) Encode(src string) ([]int, error) {
-	return wt.EncodeBytes([]rune(src)), nil
+	return wt.EncodeBytes([]rune(src))
 }
 
 // Decode decodes tokens to a string
@@ -139,31 +148,13 @@ func (wt *WorldTokenizer) Decode(tokens []int) string {
 }
 
 func parseBytes(s string) (string, error) {
-	//s = strings.TrimSpace(s)
-	//if strings.HasPrefix(s, "'\\x") && strings.HasSuffix(s, "'") && len(s) > 2 {
-	//	// handle '\x...'
-	//	var bs []byte
-	//	s = strings.Trim(s, "'")
-	//	caps := strings.Split(s, "\\x")
-	//	for _, cap := range caps {
-	//		if len(cap) <= 0 {
-	//			continue
-	//		}
-	//		unquoted, err := strconv.Unquote("'\\x" + cap + "'")
-	//		if err != nil {
-	//			return nil, err
-	//		}
-	//		bs = append(bs, []byte(unquoted)...)
-	//	}
-	//
-	//	return bs, nil
-	//}
 	if strings.HasPrefix(s, "b'") && strings.HasSuffix(s, "'") && len(s) > 3 {
 		// handle b'...'
 		return s[2 : len(s)-1], nil
 	}
 	if len(s) <= 0 {
-		return "", nil
+		return "", errors.New("rwkv_vocab_v20230424.txt vocab list broke, got vocab length equal zero")
 	}
+	// handle ''
 	return s[1 : len(s)-1], nil
 }

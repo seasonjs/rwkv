@@ -28,6 +28,7 @@ func TestRwkvModel(t *testing.T) {
 
 	if err != nil {
 		t.Error(err)
+		return
 	}
 
 	defer func(rwkv *RwkvModel) {
@@ -37,7 +38,11 @@ func TestRwkvModel(t *testing.T) {
 		}
 	}(rwkv)
 
-	rwkv.LoadFromFile("./data/rwkv-169M.bin", 2)
+	err = rwkv.LoadFromFile("./data/rwkv-169M.bin", 2)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 	t.Run("test predit", func(t *testing.T) {
 		ctx, err := rwkv.InitState()
 		if err != nil {
@@ -77,6 +82,7 @@ func TestAutoLoad(t *testing.T) {
 
 	if err != nil {
 		t.Error(err)
+		return
 	}
 
 	defer func(rwkv *RwkvModel) {
@@ -86,7 +92,11 @@ func TestAutoLoad(t *testing.T) {
 		}
 	}(rwkv)
 
-	rwkv.LoadFromFile("./data/rwkv-169M.bin", 2)
+	err = rwkv.LoadFromFile("./data/rwkv-169M.bin", 2)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
 	t.Run("test predict", func(t *testing.T) {
 		ctx, err := rwkv.InitState()

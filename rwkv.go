@@ -4,6 +4,7 @@
 package rwkv
 
 import (
+	"errors"
 	"os"
 	"strings"
 )
@@ -77,11 +78,16 @@ func NewRwkvModel(dylibPath string, options RwkvOptions) (*RwkvModel, error) {
 	}, nil
 }
 
-func (m *RwkvModel) LoadFromFile(path string, thread uint32) {
+func (m *RwkvModel) LoadFromFile(path string, thread uint32) error {
+	_, err := os.Stat(path)
+	if err != nil {
+		return errors.New("the system cannot find the model file specified")
+	}
 	ctx := m.cRwkv.RwkvInitFromFile(path, thread)
 	m.ctx = ctx
 	// by default disable error printing and handle errors by go error
 	m.cRwkv.RwkvSetPrintErrors(ctx, m.options.printError)
+	return nil
 }
 
 func (m *RwkvModel) QuantizeModelFile(in, out string, format QuantizedFormat) error {

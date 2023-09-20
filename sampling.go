@@ -130,14 +130,14 @@ func argMax(slice []float32) int {
 }
 
 func randomChoice(length int, probabilities []float32) int {
-	rand.Seed(time.Now().UnixNano())
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	cumulativeProbabilities := make([]float32, length)
 	cumulativeProbabilities[0] = probabilities[0]
 	for i := 1; i < length; i++ {
 		cumulativeProbabilities[i] = cumulativeProbabilities[i-1] + probabilities[i]
 	}
 
-	randomValue := rand.Float32()
+	randomValue := r.Float32()
 	for i, cp := range cumulativeProbabilities {
 		if randomValue <= cp {
 			return i
