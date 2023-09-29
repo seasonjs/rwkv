@@ -76,7 +76,7 @@ func TestRwkvModel(t *testing.T) {
 func TestAutoLoad(t *testing.T) {
 	rwkv, err := NewRwkvAutoModel(RwkvOptions{
 		MaxTokens:     100,
-		StopString:    "\n",
+		StopString:    "<|endoftext|>",
 		Temperature:   0.8,
 		TopP:          0.5,
 		TokenizerType: World, //or World
@@ -95,7 +95,7 @@ func TestAutoLoad(t *testing.T) {
 		}
 	}(rwkv)
 
-	err = rwkv.LoadFromFile("./models/RWKV-novel-4-World-7B-20230810-ctx128k-ggml-f16.bin", 20)
+	err = rwkv.LoadFromFile("./models/RWKV-novel-4-World-7B-20230810-ctx128k-ggml-Q5_1.bin", 20)
 	if err != nil {
 		t.Error(err)
 		return
@@ -132,4 +132,27 @@ func TestAutoLoad(t *testing.T) {
 		assert(t, len(responseText) >= 0)
 	})
 
+}
+
+func TestRwkvModel_QuantizeModelFile(t *testing.T) {
+	rwkv, err := NewRwkvAutoModel(RwkvOptions{
+		MaxTokens:     100,
+		StopString:    "\n",
+		Temperature:   0.8,
+		TopP:          0.5,
+		TokenizerType: World, //or World
+		PrintError:    true,
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	defer rwkv.Close()
+
+	err = rwkv.QuantizeModelFile("./models/RWKV-novel-4-World-7B-20230810-ctx128k-ggml-f16.bin", "./models/RWKV-novel-4-World-7B-20230810-ctx128k-ggml-Q5_1.bin", Q5_1)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 }

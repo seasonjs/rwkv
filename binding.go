@@ -318,7 +318,11 @@ func (c *CRwkvImpl) RwkvInitState(ctx *RwkvCtx, state []float32) {
 
 func (c *CRwkvImpl) RwkvFree(ctx *RwkvCtx) error {
 	c.cRwkvFree(ctx.ctx)
-	return closeLibrary(c.libRwkv)
+	if c.libRwkv != 0 {
+		return closeLibrary(c.libRwkv)
+	}
+	c.libRwkv = 0
+	return nil
 }
 
 func (c *CRwkvImpl) RwkvQuantizeModelFile(ctx *RwkvCtx, in, out string, format QuantizedFormat) error {

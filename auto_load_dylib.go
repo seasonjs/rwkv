@@ -17,11 +17,7 @@ func dumpRwkvLibrary() (*os.File, error) {
 	if err := os.WriteFile(file.Name(), getDl(), 0400); err != nil {
 		return nil, fmt.Errorf("error writing file: %w", err)
 	}
-	defer func() {
-		err := file.Close()
-		if err != nil {
-			return
-		}
-	}()
+	defer file.Close()
+
 	return file, nil
 }

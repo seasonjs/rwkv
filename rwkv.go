@@ -91,20 +91,16 @@ func (m *RwkvModel) LoadFromFile(path string, thread uint32) error {
 }
 
 func (m *RwkvModel) QuantizeModelFile(in, out string, format QuantizedFormat) error {
-	if err := hasCtx(m.ctx); err != nil {
-		return err
-	}
 	return m.cRwkv.RwkvQuantizeModelFile(m.ctx, in, out, format)
 }
 
 func (m *RwkvModel) Close() error {
-	if err := hasCtx(m.ctx); err != nil {
-		return err
+	if m.ctx != nil {
+		if err := m.cRwkv.RwkvFree(m.ctx); err != nil {
+			return err
+		}
+		m.ctx = nil
 	}
-	if err := m.cRwkv.RwkvFree(m.ctx); err != nil {
-		return err
-	}
-	m.ctx = nil
 	if m.isAutoLoad {
 		err := os.Remove(m.dylibPath)
 		return err
