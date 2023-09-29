@@ -79,7 +79,8 @@ func TestAutoLoad(t *testing.T) {
 		StopString:    "\n",
 		Temperature:   0.8,
 		TopP:          0.5,
-		TokenizerType: Normal, //or World
+		TokenizerType: World, //or World
+		PrintError:    true,
 	})
 
 	if err != nil {
@@ -94,7 +95,7 @@ func TestAutoLoad(t *testing.T) {
 		}
 	}(rwkv)
 
-	err = rwkv.LoadFromFile("./data/rwkv-169M.bin", 2)
+	err = rwkv.LoadFromFile("./models/RWKV-novel-4-World-7B-20230810-ctx128k-ggml-f16.bin", 20)
 	if err != nil {
 		t.Error(err)
 		return

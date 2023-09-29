@@ -19,6 +19,9 @@ var libRwkvAvx2 []byte
 //go:embed deps/windows/rwkv_avx512_x64.dll
 var libRwkvAvx512 []byte
 
+//go:embed deps/windows/rwkv_hipBLAS.dll
+var libRwkvHipLAS []byte
+
 var libName = "rwkv-*.dll"
 
 func getDl() []byte {
@@ -31,6 +34,7 @@ func getDl() []byte {
 	if cpu.X86.HasAVX {
 		return libRwkvAvx
 	}
+	//return libRwkvHipLAS
 	panic("Automatic loading of dynamic library failed, please use `NewRwkvModel` method load manually. ")
 	return nil
 }
