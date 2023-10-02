@@ -18,7 +18,7 @@ var libRwkvArm []byte
 
 var libName = "librwkv-*.dylib"
 
-func getDl() []byte {
+func getDl(gpu bool) []byte {
 	if runtime.GOARCH == "amd64" {
 		return libRwkvAmd64
 	}

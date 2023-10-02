@@ -5,16 +5,17 @@ package rwkv
 
 import (
 	"fmt"
+
 	"os"
 )
 
-func dumpRwkvLibrary() (*os.File, error) {
+func dumpRwkvLibrary(gpu bool) (*os.File, error) {
 	file, err := os.CreateTemp("", libName)
 	if err != nil {
 		return nil, fmt.Errorf("error creating temp file: %w", err)
 	}
 
-	if err := os.WriteFile(file.Name(), getDl(), 0400); err != nil {
+	if err := os.WriteFile(file.Name(), getDl(gpu), 0400); err != nil {
 		return nil, fmt.Errorf("error writing file: %w", err)
 	}
 	defer file.Close()

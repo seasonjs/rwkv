@@ -18,27 +18,32 @@ const (
 	Q8_0 QuantizedFormat = "Q8_0"
 )
 
-const cRwkvSetPrintErrors = "rwkv_set_print_errors"
-const cRwkvGetPrintErrors = "rwkv_get_print_errors"
-const cRwkvGetLastError = "rwkv_get_last_error"
-const cRwkvInitFromFile = "rwkv_init_from_file"
+const (
+	cRwkvSetPrintErrors = "rwkv_set_print_errors"
 
-const cRwkvCloneContext = "rwkv_clone_context"
-const cRwkvGpuOffloadLayers = "rwkv_gpu_offload_layers"
-const cRwkvEval = "rwkv_eval"
-const cRwkvEvalSequence = "rwkv_eval_sequence"
+	cRwkvGetPrintErrors = "rwkv_get_print_errors"
+	cRwkvGetLastError   = "rwkv_get_last_error"
+	cRwkvInitFromFile   = "rwkv_init_from_file"
 
-const cRwkvGetNVocab = "rwkv_get_n_vocab"
-const cRwkvGetNEmbedding = "rwkv_get_n_embed"
-const cRwkvGetNLayer = "rwkv_get_n_layer"
-const cRwkvGetStateLength = "rwkv_get_state_len"
+	cRwkvCloneContext     = "rwkv_clone_context"
+	cRwkvGpuOffloadLayers = "rwkv_gpu_offload_layers"
+	cRwkvEval             = "rwkv_eval"
+	cRwkvEvalSequence     = "rwkv_eval_sequence"
 
-const cRwkvGetLogitsLength = "rwkv_get_logits_len"
-const cRwkvInitState = "rwkv_init_state"
-const cRwkvFree = "rwkv_free"
-const cRwkvQuantizeModelFile = "rwkv_quantize_model_file"
+	cRwkvGetNVocab      = "rwkv_get_n_vocab"
+	cRwkvGetNEmbedding  = "rwkv_get_n_embed"
+	cRwkvGetNLayer      = "rwkv_get_n_layer"
+	cRwkvGetStateLength = "rwkv_get_state_len"
 
-const cRwkvGetSystemInfoString = "rwkv_get_system_info_string"
+	cRwkvGetLogitsLength   = "rwkv_get_logits_len"
+	cRwkvInitState         = "rwkv_init_state"
+	cRwkvFree              = "rwkv_free"
+	cRwkvQuantizeModelFile = "rwkv_quantize_model_file"
+
+	cRwkvGetSystemInfoString = "rwkv_get_system_info_string"
+)
+
+type GpuType string
 
 type RwkvCtx struct {
 	ctx uintptr

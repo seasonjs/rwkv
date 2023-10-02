@@ -5,6 +5,7 @@ package rwkv
 
 import (
 	"errors"
+	"log"
 	"os"
 	"strings"
 )
@@ -19,12 +20,15 @@ type RwkvModel struct {
 }
 
 type RwkvOptions struct {
-	PrintError    bool
-	MaxTokens     int
-	StopString    string
-	Temperature   float32
-	TopP          float32
-	TokenizerType TokenizerType
+	PrintError       bool
+	MaxTokens        int
+	StopString       string
+	Temperature      float32
+	TopP             float32
+	TokenizerType    TokenizerType
+	CpuThreads       uint32
+	GpuEnable        bool
+	GpuOffLoadLayers uint32
 }
 
 func hasCtx(ctx *RwkvCtx) error {
@@ -35,7 +39,8 @@ func hasCtx(ctx *RwkvCtx) error {
 }
 
 func NewRwkvAutoModel(options RwkvOptions) (*RwkvModel, error) {
-	file, err := dumpRwkvLibrary()
+
+	file, err := dumpRwkvLibrary(options.GpuEnable)
 	if err != nil {
 		return nil, err
 	}
@@ -70,6 +75,12 @@ func NewRwkvModel(dylibPath string, options RwkvOptions) (*RwkvModel, error) {
 		return nil, err
 	}
 
+	if options.GpuEnable {
+		log.Printf("You are about to offload your model to the GPU. " +
+			"Please confirm the size of your GPU memory to prevent memory overflow." +
+			"If the model is larger than GPU memory, please specify the layers to offload.")
+	}
+
 	return &RwkvModel{
 		dylibPath: dylibPath,
 		cRwkv:     cRwkv,
@@ -78,13 +89,31 @@ func NewRwkvModel(dylibPath string, options RwkvOptions) (*RwkvModel, error) {
 	}, nil
 }
 
-func (m *RwkvModel) LoadFromFile(path string, thread uint32) error {
+func (m *RwkvModel) Gpu() {
+
+}
+
+func (m *RwkvModel) LoadFromFile(path string) error {
 	_, err := os.Stat(path)
 	if err != nil {
 		return errors.New("the system cannot find the model file specified")
 	}
-	ctx := m.cRwkv.RwkvInitFromFile(path, thread)
+	ctx := m.cRwkv.RwkvInitFromFile(path, m.options.CpuThreads)
 	m.ctx = ctx
+	// offload all layers to GPU
+	gpuNLayers := uint32(m.cRwkv.RwkvGetNLayer(ctx) + 1)
+	// if user specify the layers to offload, use the user specified value
+	if m.options.GpuOffLoadLayers > 0 {
+		gpuNLayers = m.options.GpuOffLoadLayers
+	}
+
+	if m.options.GpuEnable {
+		err = m.cRwkv.RwkvGpuOffloadLayers(ctx, gpuNLayers)
+		if err != nil {
+			return err
+		}
+	}
+
 	// by default disable error printing and handle errors by go error
 	m.cRwkv.RwkvSetPrintErrors(ctx, m.options.PrintError)
 	return nil

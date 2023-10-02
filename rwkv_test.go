@@ -25,6 +25,7 @@ func TestRwkvModel(t *testing.T) {
 		Temperature:   0.8,
 		TopP:          0.5,
 		TokenizerType: Normal, //or World
+		CpuThreads:    2,
 	})
 
 	if err != nil {
@@ -39,7 +40,7 @@ func TestRwkvModel(t *testing.T) {
 		}
 	}(rwkv)
 
-	err = rwkv.LoadFromFile("./data/rwkv-169M.bin", 2)
+	err = rwkv.LoadFromFile("./data/rwkv-169M.bin")
 	if err != nil {
 		t.Error(err)
 		return
@@ -81,6 +82,7 @@ func TestAutoLoad(t *testing.T) {
 		TopP:          0.5,
 		TokenizerType: World, //or World
 		PrintError:    true,
+		CpuThreads:    2,
 	})
 
 	if err != nil {
@@ -95,7 +97,7 @@ func TestAutoLoad(t *testing.T) {
 		}
 	}(rwkv)
 
-	err = rwkv.LoadFromFile("./models/RWKV-novel-4-World-7B-20230810-ctx128k-ggml-Q5_1.bin", 20)
+	err = rwkv.LoadFromFile("./models/RWKV-novel-4-World-7B-20230810-ctx128k-ggml-Q5_1.bin")
 	if err != nil {
 		t.Error(err)
 		return
@@ -155,4 +157,66 @@ func TestRwkvModel_QuantizeModelFile(t *testing.T) {
 		t.Error(err)
 		return
 	}
+}
+
+func TestNewRwkvAutoModelGPU(t *testing.T) {
+	rwkv, err := NewRwkvAutoModel(RwkvOptions{
+		MaxTokens:     100,
+		StopString:    "/n",
+		Temperature:   0.8,
+		TopP:          0.5,
+		TokenizerType: World, //or World
+		PrintError:    true,
+		CpuThreads:    10,
+		GpuEnable:     true,
+	})
+
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	defer func(rwkv *RwkvModel) {
+		err := rwkv.Close()
+		if err != nil {
+			t.Error(err)
+		}
+	}(rwkv)
+
+	err = rwkv.LoadFromFile("./models/RWKV-novel-4-World-7B-20230810-ctx128k-ggml-Q5_1.bin")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	t.Run("test predict", func(t *testing.T) {
+		ctx, err := rwkv.InitState()
+		if err != nil {
+			t.Error(err)
+		}
+		out, err := ctx.Predict("hello ")
+		if err != nil {
+			t.Error(err.Error())
+		}
+		t.Log(out)
+		assert(t, len(out) >= 0)
+	})
+
+	t.Run("test predict stream", func(t *testing.T) {
+		ctx, err := rwkv.InitState()
+		if err != nil {
+			t.Error(err)
+		}
+		responseText := ""
+		msg := make(chan string)
+		ctx.PredictStream("hello ", msg)
+		if err != nil {
+			t.Error(err)
+		}
+		for value := range msg {
+			responseText += value
+		}
+		t.Log(responseText)
+		assert(t, len(responseText) >= 0)
+	})
 }

@@ -8,6 +8,7 @@ package rwkv
 import (
 	_ "embed"
 	"golang.org/x/sys/cpu"
+	"log"
 ) // Needed for go:embed
 
 //go:embed deps/windows/rwkv_avx_x64.dll
@@ -19,12 +20,28 @@ var libRwkvAvx2 []byte
 //go:embed deps/windows/rwkv_avx512_x64.dll
 var libRwkvAvx512 []byte
 
-//go:embed deps/windows/rwkv_hipBLAS.dll
-var libRwkvHipLAS []byte
+//go:embed deps/windows/rwkv_hipBLAS_GFX1100.dll
+var libRwkvHipBLASGFX1100 []byte
 
 var libName = "rwkv-*.dll"
 
-func getDl() []byte {
+var supportGpuTable = map[string][]byte{
+	"AMD Radeon RX 7900 XTX": libRwkvHipBLASGFX1100,
+	"AMD Radeon RX 7900 XT":  libRwkvHipBLASGFX1100,
+}
+
+func getDl(gpu bool) []byte {
+	if gpu {
+		gpu, err := GetGPUInfo()
+		if err != nil {
+			log.Println(err)
+		}
+		if supportGpuTable[gpu] != nil {
+			return supportGpuTable[gpu]
+		} else {
+			log.Println("GPU not support, use CPU instead.")
+		}
+	}
 	if cpu.X86.HasAVX512 {
 		return libRwkvAvx512
 	}
