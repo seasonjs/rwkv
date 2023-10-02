@@ -15,7 +15,7 @@ import (
 func runPowerShellCommand(command string) (string, error) {
 	cmd := exec.Command("powershell", "-Command", command)
 
-	// 执行命令并获取输出
+	// execute the command and get the output
 	output, err := cmd.Output()
 	if err != nil {
 		return "", err
@@ -36,7 +36,7 @@ func GetGPUInfo() (string, error) {
 	for _, info := range infos {
 		match := re.FindStringSubmatch(info)
 		if len(match) >= 2 {
-			// 提取Name属性的值
+			// get the first match Name
 			gpuName := match[1]
 			return gpuName, nil
 		}
