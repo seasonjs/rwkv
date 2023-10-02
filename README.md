@@ -20,7 +20,7 @@ So far `NewRwkvAutoModel` only support `Windows ROCM GFX1100`.
 
 If you want to use GPU, please make sure your GPU support `Windows ROCM GFX1100`.
 
-Click here to see your `Windows ROCM GFX1100`  [architecture](https://rocm.docs.amd.com/en/latest/release/windows_support.html#windows-supported-gpus).
+Click here to see your `Windows ROCM`  [architecture](https://rocm.docs.amd.com/en/latest/release/windows_support.html#windows-supported-gpus).
 
 | platform | x32         | x64                     | arm         | AMD/ROCM        | NVIDIA/CUDA |
 |----------|-------------|-------------------------|-------------|-----------------|-------------|
