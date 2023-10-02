@@ -1,2 +1,2 @@
 common: master-2d3cdd7
-windows_hipBLAS: master-0df970a
+windows_hipBLAS_GFX1100: master-0df970a

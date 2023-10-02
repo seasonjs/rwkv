@@ -1,6 +1,6 @@
 # rwkv
 
-pure go for rwkv and support cross-platform
+pure go for rwkv and support cross-platform.
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/seasonjs/rwkv.svg)](https://pkg.go.dev/github.com/seasonjs/rwkv)
 
@@ -12,15 +12,21 @@ rwkv.go is a wrapper around [rwkv-cpp](https://github.com/saharNooby/rwkv.cpp), 
 go get github.com/seasonjs/rwkv
 ```
 
-## Compatibility
+## AutoModel Compatibility
 
-See `deps` folder for dylib compatibility, push request is welcome.
+See `deps` folder for dylib compatibility, you can [build the library by yourself](https://github.com/saharNooby/rwkv.cpp#option-22-build-the-library-yourself), and push request is welcome.
 
-| platform | x32         | x64                     | arm         |
-|----------|-------------|-------------------------|-------------|
-| windows  | not support | support avx2/avx512/avx | not support |
-| linux    | not support | support                 | not support |
-| darwin   | not support | support                 | support     |
+So far `NewRwkvAutoModel` only support `Windows ROCM GFX1100`.
+
+If you want to use GPU, please make sure your GPU support `Windows ROCM GFX1100`.
+
+Click here to see your `Windows ROCM GFX1100`  [architecture](https://rocm.docs.amd.com/en/latest/release/windows_support.html#windows-supported-gpus).
+
+| platform | x32         | x64                     | arm         | AMD/ROCM        | NVIDIA/CUDA |
+|----------|-------------|-------------------------|-------------|-----------------|-------------|
+| windows  | not support | support avx2/avx512/avx | not support | support GFX1100 | not support |
+| linux    | not support | support                 | not support | not support     | not support |
+| darwin   | not support | support                 | support     | not support     | not support |
 
 ## Usage
 
@@ -41,6 +47,7 @@ func main() {
 		Temperature: 0.8,
 		TopP:        0.5,
 		TokenizerType: rwkv.Normal, //or World 
+		CpuThreads:    10,
 	})
 	if err != nil {
 		fmt.Print(err.Error())
@@ -52,7 +59,7 @@ func main() {
 		}
 	}(model)
 
-	err = model.LoadFromFile("./data/rwkv-110M-Q5.bin", 2)
+	err = model.LoadFromFile("./data/rwkv-110M-Q5.bin")
 	if err != nil {
 		fmt.Print(err.Error())
 	}
@@ -84,6 +91,54 @@ func main() {
 		responseText += value
 	}
 	fmt.Print(responseText)
+}
+
+```
+Now GPU is supported!! you can use `NewRwkvAutoModel` to set `GpuEnable`. see `AutoModel Compatibility` about gpu support.
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/seasonjs/rwkv"
+)
+
+func main() {
+	model, err := NewRwkvAutoModel(rwkv.RwkvOptions{
+		MaxTokens:     100,
+		StopString:    "/n",
+		Temperature:   0.8,
+		TopP:          0.5,
+		TokenizerType: World, //or World
+		PrintError:    true,
+		CpuThreads:    10,
+		GpuEnable:     true,
+		//GpuOffLoadLayers:      0, //default 0 means all layers will offload to gpu
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer model.Close()
+
+	err = model.LoadFromFile("./models/RWKV-novel-4-World-7B-20230810-ctx128k-ggml-Q5_1.bin")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	// NOTICE: This context hold the logits and status, as well can int a new one.
+	ctx, err := rwkv.InitState()
+	if err != nil {
+		panic(err)
+	}
+	out, err := ctx.Predict("hello ")
+	if err != nil {
+		fmt.Printf("error: %v", err)
+	}
+	fmt.Print(out)
 }
 
 ```
@@ -119,6 +174,7 @@ func main() {
 		Temperature: 0.8,
 		TopP:        0.5,
 		TokenizerType: rwkv.Normal, //or World 
+		CpuThreads:    10,
 	})
 	if err != nil {
 		fmt.Print(err.Error())
@@ -130,7 +186,7 @@ func main() {
 		}
 	}(model)
 
-	err = model.LoadFromFile("./data/rwkv-110M-Q5.bin", 2)
+	err = model.LoadFromFile("./data/rwkv-110M-Q5.bin")
 	if err != nil {
 		fmt.Print(err.Error())
 	}
