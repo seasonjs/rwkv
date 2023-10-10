@@ -8,8 +8,10 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 //go:embed rwkv_vocab_v20230424.txt
@@ -88,6 +90,7 @@ func NewWorldTokenizer() (*WorldTokenizer, error) {
 	}
 
 	scanner := bufio.NewScanner(f)
+	nonStandardToken := 0
 	for scanner.Scan() {
 		line := scanner.Text()
 		fIndex := strings.Index(line, " ")
@@ -96,14 +99,34 @@ func NewWorldTokenizer() (*WorldTokenizer, error) {
 		if err != nil {
 			return nil, err
 		}
+		expectLen, err := strconv.Atoi(line[lIndex+1:])
+		if err != nil {
+			return nil, err
+		}
 		rest := line[fIndex+1 : lIndex]
 		token, err := parseBytes(rest)
 		if err != nil {
 			return nil, err
 		}
+		if expectLen != len(token) {
+			if strings.ContainsRune(token, utf8.RuneError) {
+				nonStandardToken++
+			}
+			log.Print("parse vocabulary to bytes fail,token index is:", index,
+				" token is: ", token,
+				", except length is: ", expectLen,
+				", parse length is: ", len(token),
+				", peek token bytes: ", []rune(token))
+		}
 		wt.IndexToToken[index] = token
 		wt.TokenToIndex[token] = index
 		wt.Trie.Add(token)
+	}
+
+	if nonStandardToken > 0 {
+		log.Print("rwkv_vocab_v20230424.txt contains non-standard utf-8 total: ",
+			nonStandardToken,
+			". they will not affect your normal use")
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -150,11 +173,74 @@ func (wt *WorldTokenizer) Decode(tokens []int) string {
 func parseBytes(s string) (string, error) {
 	if strings.HasPrefix(s, "b'") && strings.HasSuffix(s, "'") && len(s) > 3 {
 		// handle b'...'
-		return s[2 : len(s)-1], nil
+		s = s[1:]
 	}
 	if len(s) <= 0 {
 		return "", errors.New("rwkv_vocab_v20230424.txt vocab list broke, got vocab length equal zero")
 	}
 	// handle ''
-	return s[1 : len(s)-1], nil
+	if strings.HasPrefix(s, "'") && strings.HasSuffix(s, "'") {
+		s = s[1 : len(s)-1]
+		b := encodeUtf8(s)
+		b = ignoreBackslashes(b, false)
+		return b, nil
+	}
+	// handle ""
+	if strings.HasPrefix(s, "\"") && strings.HasSuffix(s, "\"") {
+		b := ignoreBackslashes(s[1:len(s)-1], true)
+		return b, nil
+	}
+	//
+	return s, nil
+}
+
+// we should encodeUtf8 by python style.
+func encodeUtf8(in string) string {
+	var backslash byte = '\\'
+	// Handle quoted strings with escape sequences.
+	var buf []byte
+	in0 := in
+	buf = make([]byte, 0, (len(in)+1)*3/2) // try to avoid more allocations
+	for len(in) > 0 {
+		r, multibyte, rem, err := strconv.UnquoteChar(in, backslash)
+		if err != nil {
+			return in0
+		}
+		in = rem
+
+		// Append the character if unescaping the input.
+		if r < utf8.RuneSelf || !multibyte {
+			buf = append(buf, byte(r))
+		} else {
+			var arr [utf8.UTFMax]byte
+			n := utf8.EncodeRune(arr[:], r)
+			buf = append(buf, arr[:n]...)
+		}
+	}
+	return string(buf)
+}
+
+// we should ignoreBackslashes by python style.
+func ignoreBackslashes(in string, doubleQuotes bool) string {
+	var backslash byte = '\\'
+	var quoteChar byte = '\''
+	var buf []byte
+	buf = make([]byte, 0, (len(in)+1)*3/2)
+	for index, ch := range []byte(in) {
+		if ch == backslash && len(in) > index+1 {
+			if doubleQuotes {
+				if in[index+1] != backslash {
+					buf = append(buf, ch)
+				}
+			} else {
+				if in[index+1] != quoteChar {
+					buf = append(buf, ch)
+				}
+			}
+
+		} else {
+			buf = append(buf, ch)
+		}
+	}
+	return string(buf)
 }

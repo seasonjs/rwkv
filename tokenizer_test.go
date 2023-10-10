@@ -69,4 +69,55 @@ func TestWorldTokenizer(t *testing.T) {
 	t.Run("Test Special Characters", func(t *testing.T) {
 		assertEncodeAndDecode(t, tk, seq6)
 	})
+
+	seq7 := "\n \n\n \t\t \t"
+	t.Run("Test table character", func(t *testing.T) {
+		assertEncodeAndDecode(t, tk, seq7)
+	})
+
+}
+
+func TestEncodeUtf8(t *testing.T) {
+	t.Run("Test new line to ASCII", func(t *testing.T) {
+		str := string([]rune{
+			'\\',
+			'n',
+			'\\',
+			'n',
+		})
+		// Handle quoted strings with escape sequences.
+		b := encodeUtf8(str)
+		r := []rune(b)
+		t.Log(r)
+		assert(t, len(r) > 0)
+	})
+	t.Run("Test new Table to ASCII", func(t *testing.T) {
+		str := string([]rune{
+			'\\',
+			't',
+			'\\',
+			't',
+		})
+		// Handle quoted strings with escape sequences.
+		b := encodeUtf8(str)
+		r := []rune(b)
+		t.Log(r)
+		assert(t, len(r) == 2)
+	})
+	t.Run("Test special char", func(t *testing.T) {
+		str := string([]rune{
+			'\x80',
+			'\x81',
+			'\x91',
+			'\x92',
+			'\x93',
+			'\x94',
+			'\x97',
+		})
+		// Handle quoted strings with escape sequences.
+		b := encodeUtf8(str)
+		r := []rune(b)
+		assert(t, len(r) == 14)
+		t.Log(r)
+	})
 }
