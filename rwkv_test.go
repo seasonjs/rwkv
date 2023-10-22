@@ -152,7 +152,7 @@ func TestRwkvModel_QuantizeModelFile(t *testing.T) {
 
 	defer rwkv.Close()
 
-	err = rwkv.QuantizeModelFile("./models/RWKV-novel-4-World-7B-20230810-ctx128k-ggml-f16.bin", "./models/RWKV-novel-4-World-7B-20230810-ctx128k-ggml-Q5_1.bin", Q5_1)
+	err = rwkv.QuantizeModelFile("./models/RWKV-novel-4-World-7B-20230810-ctx128k-ggml-f16.bin", "./models/RWKV-novel-4-World-7B-20230810-ctx128k-ggml-Q4_0.bin", Q4_0)
 	if err != nil {
 		t.Error(err)
 		return
@@ -183,18 +183,18 @@ func TestNewRwkvAutoModelGPU(t *testing.T) {
 		}
 	}(rwkv)
 
-	err = rwkv.LoadFromFile("./models/RWKV-novel-4-World-7B-20230810-ctx128k-ggml-Q5_1.bin")
+	err = rwkv.LoadFromFile("./models/RWKV-novel-4-World-7B-20230810-ctx128k-ggml-f16.bin")
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
 	t.Run("test predict", func(t *testing.T) {
-		ctx, err := rwkv.InitState()
+		ctx, err := rwkv.InitState("\\n我希望你能充当一个英语翻译、拼写纠正和改进助手。我会用任何语言与你交谈，你将检测语言、翻译并用修正和改进后的版本回答我，用中文表达。我希望你能用更加美丽、优雅且高级的英语词汇和句子替换我的简化A0级词汇和句子。保持意思相同，但使其更具文学性。请只回复纠正和改进的部分，不要写解释。")
 		if err != nil {
 			t.Error(err)
 		}
-		out, err := ctx.Predict("hello ")
+		out, err := ctx.Predict("幸運を \\n\\n")
 		if err != nil {
 			t.Error(err.Error())
 		}

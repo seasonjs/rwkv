@@ -89,10 +89,6 @@ func NewRwkvModel(dylibPath string, options RwkvOptions) (*RwkvModel, error) {
 	}, nil
 }
 
-func (m *RwkvModel) Gpu() {
-
-}
-
 func (m *RwkvModel) LoadFromFile(path string) error {
 	_, err := os.Stat(path)
 	if err != nil {
@@ -145,13 +141,26 @@ type RwkvState struct {
 }
 
 // InitState give a new state for new chat context state
-func (m *RwkvModel) InitState() (*RwkvState, error) {
+func (m *RwkvModel) InitState(prompt ...string) (*RwkvState, error) {
 	if err := hasCtx(m.ctx); err != nil {
 		return nil, err
 	}
 	state := make([]float32, m.cRwkv.RwkvGetStateLength(m.ctx))
 	m.cRwkv.RwkvInitState(m.ctx, state)
 	logits := make([]float32, m.cRwkv.RwkvGetLogitsLength(m.ctx))
+	p := ""
+	if len(prompt) > 0 {
+		p = prompt[0]
+	}
+	if len(p) > 0 {
+		encode, err := m.tokenizer.Encode(p)
+		for _, token := range encode {
+			err = m.cRwkv.RwkvEval(m.ctx, uint32(token), state, state, logits)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
 	return &RwkvState{
 		state:     state,
 		rwkvModel: m,
