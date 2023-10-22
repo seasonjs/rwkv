@@ -161,8 +161,8 @@ func TestRwkvModel_QuantizeModelFile(t *testing.T) {
 
 func TestNewRwkvAutoModelGPU(t *testing.T) {
 	rwkv, err := NewRwkvAutoModel(RwkvOptions{
-		MaxTokens:     100,
-		StopString:    "/n",
+		MaxTokens:     50,
+		StopString:    "\\n\\n",
 		Temperature:   0.8,
 		TopP:          0.5,
 		TokenizerType: World, //or World
@@ -190,11 +190,13 @@ func TestNewRwkvAutoModelGPU(t *testing.T) {
 	}
 
 	t.Run("test predict", func(t *testing.T) {
-		ctx, err := rwkv.InitState("\\n我希望你能充当一个英语翻译、拼写纠正和改进助手。我会用任何语言与你交谈，你将检测语言、翻译并用修正和改进后的版本回答我，用中文表达。我希望你能用更加美丽、优雅且高级的英语词汇和句子替换我的简化A0级词汇和句子。保持意思相同，但使其更具文学性。请只回复纠正和改进的部分，不要写解释。")
+		ctx, err := rwkv.InitState()
 		if err != nil {
 			t.Error(err)
 		}
-		out, err := ctx.Predict("幸運を \\n\\n")
+		out, err := ctx.Predict("天元大陆上有五个国家，分别是北方的天金帝国，南方的华盛帝国，西方的落日帝国和东方的索域联邦，而处于四大国中央，分别和四国接壤的一片面积不大呈六角形的土地就是天元大陆上最著名的神圣教廷。" +
+			"四大王国中除了落日帝国和华盛帝国关系不佳以外，其他国家到是可以和平相处。" +
+			"每年，各个国家都要向教廷上交一定的“保护费”以作为教廷的开销。")
 		if err != nil {
 			t.Error(err.Error())
 		}
@@ -219,4 +221,59 @@ func TestNewRwkvAutoModelGPU(t *testing.T) {
 		t.Log(responseText)
 		assert(t, len(responseText) >= 0)
 	})
+}
+
+func TestChat(t *testing.T) {
+	rwkv, err := NewRwkvAutoModel(RwkvOptions{
+		MaxTokens:     500,
+		StopString:    "\\n\\n",
+		Temperature:   0.8,
+		TopP:          0.5,
+		TokenizerType: World, //or World
+		PrintError:    true,
+		CpuThreads:    10,
+		GpuEnable:     true,
+	})
+
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	defer func(rwkv *RwkvModel) {
+		err := rwkv.Close()
+		if err != nil {
+			t.Error(err)
+		}
+	}(rwkv)
+	err = rwkv.LoadFromFile("./models/RWKV-novel-4-World-7B-20230810-ctx128k-ggml-f16.bin")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	prompt := "\\nThe following is a coherent verbose detailed conversation between a Chinese girl named Alice and her friend Bob." +
+		" Alice is very intelligent, creative and friendly." +
+		" Alice likes to tell Bob a lot about herself and her opinions." +
+		" Alice usually gives Bob kind, helpful and informative advices." +
+		"\\n\\nBob: lhc\\n\\nAlice: LHC是指大型强子对撞机（Large Hadron Collider），是世界最大最强的粒子加速器，由欧洲核子中心（CERN）在瑞士日内瓦地下建造。" +
+		"LHC的原理是加速质子（氢离子）并让它们相撞，让科学家研究基本粒子和它们之间的相互作用，并在2012年证实了希格斯玻色子的存在。" +
+		"\\n\\nBob: 企鹅会飞吗\\n\\nAlice: 企鹅是不会飞的。企鹅的翅膀短而扁平，更像是游泳时的一对桨。" +
+		"企鹅的身体结构和羽毛密度也更适合在水中游泳，而不是飞行。\\n\\n"
+
+	user := "Bob: 一加一在什么情况下等于三？" +
+		"\\n\\n" +
+		"Alice: "
+	t.Run("test chat with Chinese", func(t *testing.T) {
+		ctx, err := rwkv.InitState(prompt)
+		if err != nil {
+			t.Error(err)
+		}
+		out, err := ctx.Predict(user)
+		if err != nil {
+			t.Error(err.Error())
+		}
+		t.Log(out)
+		assert(t, len(out) >= 0)
+	})
+
 }

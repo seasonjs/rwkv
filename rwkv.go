@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 )
 
 type RwkvModel struct {
@@ -153,6 +154,7 @@ func (m *RwkvModel) InitState(prompt ...string) (*RwkvState, error) {
 		p = prompt[0]
 	}
 	if len(p) > 0 {
+		startT := time.Now()
 		encode, err := m.tokenizer.Encode(p)
 		for _, token := range encode {
 			err = m.cRwkv.RwkvEval(m.ctx, uint32(token), state, state, logits)
@@ -160,6 +162,8 @@ func (m *RwkvModel) InitState(prompt ...string) (*RwkvState, error) {
 				return nil, err
 			}
 		}
+		tc := time.Since(startT)
+		log.Print("init state time cost: ", tc, "total tokens: ", len(encode))
 	}
 	return &RwkvState{
 		state:     state,
