@@ -19,6 +19,9 @@ var libRwkvArm []byte
 var libName = "librwkv-*.dylib"
 
 func getDl(gpu bool) []byte {
+	if gpu {
+		_, _ = GetGPUInfo()
+	}
 	if runtime.GOARCH == "amd64" {
 		return libRwkvAmd64
 	}

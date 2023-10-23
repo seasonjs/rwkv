@@ -32,11 +32,11 @@ var supportGpuTable = map[string][]byte{
 
 func getDl(gpu bool) []byte {
 	if gpu {
-		gpu, err := GetGPUInfo()
+		gpuInfo, err := GetGPUInfo()
 		if err != nil {
 			log.Println(err)
 		}
-		if supportGpuTable[gpu] != nil {
+		if supportGpuTable[gpuInfo] != nil {
 			return supportGpuTable[gpu]
 		} else {
 			log.Println("GPU not support, use CPU instead.")
