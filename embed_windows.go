@@ -37,21 +37,23 @@ func getDl(gpu bool) []byte {
 			log.Println(err)
 		}
 		if supportGpuTable[gpuInfo] != nil {
-			return supportGpuTable[gpu]
-		} else {
-			log.Println("GPU not support, use CPU instead.")
+			return supportGpuTable[gpuInfo]
 		}
+		log.Println("GPU not support, use CPU instead.")
 	}
 	if cpu.X86.HasAVX512 {
+		log.Println("Use CPU AVX512 instead.")
 		return libRwkvAvx512
 	}
 	if cpu.X86.HasAVX2 {
+		log.Println("Use CPU AVX2 instead.")
 		return libRwkvAvx2
 	}
 	if cpu.X86.HasAVX {
+		log.Println("Use CPU AVX instead.")
 		return libRwkvAvx
 	}
-	//return libRwkvHipLAS
+
 	panic("Automatic loading of dynamic library failed, please use `NewRwkvModel` method load manually. ")
 	return nil
 }

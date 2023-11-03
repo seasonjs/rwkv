@@ -277,3 +277,51 @@ func TestChat(t *testing.T) {
 	})
 
 }
+
+func TestRwkvState_GetEmbedding(t *testing.T) {
+	rwkv, err := NewRwkvAutoModel(RwkvOptions{
+		MaxTokens:     500,
+		TokenizerType: Normal, //or World
+		PrintError:    true,
+		CpuThreads:    2,
+		GpuEnable:     true,
+	})
+	defer rwkv.Close()
+
+	err = rwkv.LoadFromFile("./models/RWKV-4b-Pile-171M-20230202-7922-f16.bin")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	ctx, err := rwkv.InitState()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	nb := ctx.rwkvModel.cRwkv.RwkvGetNEmbedding(ctx.rwkvModel.ctx)
+	t.Log(nb)
+	nl := ctx.rwkvModel.cRwkv.RwkvGetNLayer(ctx.rwkvModel.ctx)
+
+	t.Run("hidden state", func(t *testing.T) {
+		embedding, err := ctx.GetEmbedding("hello word", false)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		t.Log(embedding)
+		t.Log(len(embedding))
+		t.Log(nl)
+		assert(t, len(embedding) == int(nb*5*nl))
+	})
+
+	t.Run("distill hidden state ", func(t *testing.T) {
+		embedding, err := ctx.GetEmbedding("hello word", true)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		t.Log(embedding)
+		assert(t, len(embedding) == int(nb))
+	})
+
+}

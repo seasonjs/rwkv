@@ -77,7 +77,7 @@ func NewRwkvModel(dylibPath string, options RwkvOptions) (*RwkvModel, error) {
 	}
 
 	if options.GpuEnable {
-		log.Printf("You are about to offload your model to the GPU. " +
+		log.Printf("If you want to try offload your model to the GPU. " +
 			"Please confirm the size of your GPU memory to prevent memory overflow." +
 			"If the model is larger than GPU memory, please specify the layers to offload.")
 	}
@@ -179,6 +179,29 @@ func (s *RwkvState) Predict(input string) (string, error) {
 		return "", err
 	}
 	return s.generateResponse(nil)
+}
+
+// GetEmbedding give the model embedding.
+// the embedding in rwkv is hidden state the len is n_emb*5*n_layer=46080.
+// So if distillation is true, we split len to n_emb = 768
+func (s *RwkvState) GetEmbedding(input string, distill bool) ([]float32, error) {
+	encode, err := s.rwkvModel.tokenizer.Encode(input)
+
+	for _, token := range encode {
+		err = s.rwkvModel.cRwkv.RwkvEval(s.rwkvModel.ctx, uint32(token), s.state, s.state, s.logits)
+		if err != nil {
+			return nil, err
+		}
+	}
+	// we should keep state clean
+	nState := s.rwkvModel.cRwkv.RwkvGetStateLength(s.rwkvModel.ctx)
+	if distill {
+		nState = s.rwkvModel.cRwkv.RwkvGetNEmbedding(s.rwkvModel.ctx)
+	}
+	emb := make([]float32, nState)
+	copy(emb, s.state)
+	s.state = make([]float32, nState)
+	return emb, nil
 }
 
 func (s *RwkvState) PredictStream(input string, output chan string) {
