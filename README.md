@@ -305,6 +305,12 @@ See detail at [rwkv-doc](https://pkg.go.dev/github.com/seasonjs/rwkv).
 * [go-rwkv.cpp](https://github.com/donomii/go-rwkv.cpp)
 * [sugarme/tokenizer](https://github.com/sugarme/tokenizer)
 
+## Sponsor
+
+Special thanks to JetBrains support for sponsoring.
+
+![JetBrains Logo (Main) logo](https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.svg)
+
 ## License
 
 Copyright (c) seasonjs. All rights reserved.
