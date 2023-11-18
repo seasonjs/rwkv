@@ -324,7 +324,10 @@ func (c *CRwkvImpl) RwkvInitState(ctx *RwkvCtx, state []float32) {
 func (c *CRwkvImpl) RwkvFree(ctx *RwkvCtx) error {
 	c.cRwkvFree(ctx.ctx)
 	if c.libRwkv != 0 {
-		return closeLibrary(c.libRwkv)
+		err := closeLibrary(c.libRwkv)
+		if err != nil {
+			return err
+		}
 	}
 	c.libRwkv = 0
 	return nil

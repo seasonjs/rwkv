@@ -226,12 +226,12 @@ func TestNewRwkvAutoModelGPU(t *testing.T) {
 func TestChat(t *testing.T) {
 	rwkv, err := NewRwkvAutoModel(RwkvOptions{
 		MaxTokens:     500,
-		StopString:    "\\n\\n",
+		StopString:    "\n\n",
 		Temperature:   0.8,
 		TopP:          0.5,
 		TokenizerType: World, //or World
 		PrintError:    true,
-		CpuThreads:    10,
+		CpuThreads:    2,
 		GpuEnable:     true,
 	})
 
@@ -240,29 +240,31 @@ func TestChat(t *testing.T) {
 		return
 	}
 
-	defer func(rwkv *RwkvModel) {
-		err := rwkv.Close()
-		if err != nil {
-			t.Error(err)
-		}
-	}(rwkv)
-	err = rwkv.LoadFromFile("./models/RWKV-novel-4-World-7B-20230810-ctx128k-ggml-f16.bin")
+	defer rwkv.Close()
+	err = rwkv.LoadFromFile("./models/RWKV-5-World-3B-v2-f16.bin")
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	prompt := "\\nThe following is a coherent verbose detailed conversation between a Chinese girl named Alice and her friend Bob." +
+	prompt := "The following is a coherent verbose detailed conversation between a Chinese girl named Alice and her friend Bob." +
 		" Alice is very intelligent, creative and friendly." +
 		" Alice likes to tell Bob a lot about herself and her opinions." +
 		" Alice usually gives Bob kind, helpful and informative advices." +
-		"\\n\\nBob: lhc\\n\\nAlice: LHC是指大型强子对撞机（Large Hadron Collider），是世界最大最强的粒子加速器，由欧洲核子中心（CERN）在瑞士日内瓦地下建造。" +
+		"\n\n" +
+		"Bob: lhc" +
+		"\n\n" +
+		"Alice: LHC是指大型强子对撞机（Large Hadron Collider），是世界最大最强的粒子加速器，由欧洲核子中心（CERN）在瑞士日内瓦地下建造。" +
 		"LHC的原理是加速质子（氢离子）并让它们相撞，让科学家研究基本粒子和它们之间的相互作用，并在2012年证实了希格斯玻色子的存在。" +
-		"\\n\\nBob: 企鹅会飞吗\\n\\nAlice: 企鹅是不会飞的。企鹅的翅膀短而扁平，更像是游泳时的一对桨。" +
-		"企鹅的身体结构和羽毛密度也更适合在水中游泳，而不是飞行。\\n\\n"
+		"\n\n" +
+		"Bob: 企鹅会飞吗" +
+		"\n\n" +
+		"Alice: 企鹅是不会飞的。企鹅的翅膀短而扁平，更像是游泳时的一对桨。" +
+		"企鹅的身体结构和羽毛密度也更适合在水中游泳，而不是飞行。" +
+		"\n\n"
 
-	user := "Bob: 一加一在什么情况下等于三？" +
-		"\\n\\n" +
-		"Alice: "
+	user := "Question: 请介绍北京的旅游景点？" +
+		"\n\n" +
+		"Answer: "
 	t.Run("test chat with Chinese", func(t *testing.T) {
 		ctx, err := rwkv.InitState(prompt)
 		if err != nil {
