@@ -233,7 +233,7 @@ import (
 	"github.com/seasonjs/rwkv"
 )
 func main()  {
-	rwkv, err := NewRwkvAutoModel(RwkvOptions{
+	model, err := rwkv.NewRwkvAutoModel(rwkv.RwkvOptions{
 		MaxTokens:     500,
 		StopString:    "\n\n",
 		Temperature:   0.8,
@@ -249,9 +249,9 @@ func main()  {
 		return
 	}
 
-	defer rwkv.Close()
+	defer model.Close()
 	
-	err = rwkv.LoadFromFile("./models/RWKV-novel-4-World-7B-20230810-ctx128k-ggml-f16.bin")
+	err = model.LoadFromFile("./models/RWKV-novel-4-World-7B-20230810-ctx128k-ggml-f16.bin")
 	if err != nil {
 		fmt.Print(err.Error())
 		return
@@ -275,7 +275,7 @@ func main()  {
 	user := "Bob: 请介绍北京的旅游景点？" +
 		"\n\n" +
 		"Alice: "
-	ctx, err := rwkv.InitState(prompt)
+	ctx, err := model.InitState(prompt)
 	
 	if err != nil {
 		fmt.Print(err.Error())
