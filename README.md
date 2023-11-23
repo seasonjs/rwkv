@@ -16,7 +16,7 @@ go get github.com/seasonjs/rwkv
 
 See `deps` folder for dylib compatibility, you can [build the library by yourself](https://github.com/saharNooby/rwkv.cpp#option-22-build-the-library-yourself), and push request is welcome.
 
-So far `NewRwkvAutoModel` only support `Windows ROCM GFX1100`.
+So far `NewRwkvAutoModel` gpu only support `Windows ROCM GFX1100`.
 
 If you want to use GPU, please make sure your GPU support `Windows ROCM GFX1100`.
 
@@ -105,7 +105,7 @@ import (
 )
 
 func main() {
-	model, err := NewRwkvAutoModel(rwkv.RwkvOptions{
+	model, err := rwkv.NewRwkvAutoModel(rwkv.RwkvOptions{
 		MaxTokens:     100,
 		StopString:    "\n\n",
 		Temperature:   0.8,
@@ -125,12 +125,12 @@ func main() {
 
 	err = model.LoadFromFile("./models/RWKV-novel-4-World-7B-20230810-ctx128k-ggml-Q5_1.bin")
 	if err != nil {
-		t.Error(err)
+		fmt.Printf("error: %v", err)
 		return
 	}
 
 	// NOTICE: This context hold the logits and status, as well can int a new one.
-	ctx, err := rwkv.InitState()
+	ctx, err := model.InitState()
 	if err != nil {
 		panic(err)
 	}
@@ -179,12 +179,7 @@ func main() {
 	if err != nil {
 		fmt.Print(err.Error())
 	}
-	defer func(rwkv *rwkv.RwkvModel) {
-		err := model.Close()
-		if err != nil {
-			panic(err)
-		}
-	}(model)
+	defer model.Close()
 
 	err = model.LoadFromFile("./data/rwkv-110M-Q5.bin")
 	if err != nil {
@@ -314,7 +309,7 @@ See detail at [rwkv-doc](https://pkg.go.dev/github.com/seasonjs/rwkv).
 
 ## Sponsor
 
-Special thanks to [JetBrains support](https://jb.gg/OpenSourceSupport.) for sponsoring.
+Special thanks to [JetBrains support](https://jb.gg/OpenSourceSupport) for sponsoring.
 
 ![JetBrains Logo (Main) logo](https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.svg)
 
