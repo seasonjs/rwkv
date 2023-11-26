@@ -172,6 +172,43 @@ func (m *RwkvModel) InitState(prompt ...string) (*RwkvState, error) {
 	}, nil
 }
 
+// CleanState will clean old state and set new state for new chat context state
+func (s *RwkvState) CleanState(prompt ...string) (*RwkvState, error) {
+	if err := hasCtx(s.rwkvModel.ctx); err != nil {
+		return nil, err
+	}
+	if s.state != nil {
+		s.state = nil
+	}
+	if s.logits != nil {
+		s.logits = nil
+	}
+	state := make([]float32, s.rwkvModel.cRwkv.RwkvGetStateLength(s.rwkvModel.ctx))
+	s.rwkvModel.cRwkv.RwkvInitState(s.rwkvModel.ctx, state)
+	logits := make([]float32, s.rwkvModel.cRwkv.RwkvGetLogitsLength(s.rwkvModel.ctx))
+	p := ""
+	if len(prompt) > 0 {
+		p = prompt[0]
+	}
+	if len(p) > 0 {
+		startT := time.Now()
+		encode, err := s.rwkvModel.tokenizer.Encode(p)
+		for _, token := range encode {
+			err = s.rwkvModel.cRwkv.RwkvEval(s.rwkvModel.ctx, uint32(token), state, state, logits)
+			if err != nil {
+				return nil, err
+			}
+		}
+		tc := time.Since(startT)
+		log.Print("init state time cost: ", tc, "total tokens: ", len(encode))
+	}
+	return &RwkvState{
+		state:     state,
+		rwkvModel: s.rwkvModel,
+		logits:    logits,
+	}, nil
+}
+
 // Predict give current chat a response
 func (s *RwkvState) Predict(input string) (string, error) {
 	err := s.handelInput(input)
