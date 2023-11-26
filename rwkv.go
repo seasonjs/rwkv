@@ -32,13 +32,6 @@ type RwkvOptions struct {
 	GpuOffLoadLayers uint32
 }
 
-func hasCtx(ctx *RwkvCtx) error {
-	if ctx.ctx == 0 {
-		return RwkvErrors(RwkvErrorCtx)
-	}
-	return nil
-}
-
 func NewRwkvAutoModel(options RwkvOptions) (*RwkvModel, error) {
 
 	file, err := dumpRwkvLibrary(options.GpuEnable)
@@ -174,7 +167,7 @@ func (m *RwkvModel) InitState(prompt ...string) (*RwkvState, error) {
 
 // CleanState will clean old state and set new state for new chat context state
 func (s *RwkvState) CleanState(prompt ...string) (*RwkvState, error) {
-	if err := hasCtx(s.rwkvModel.ctx); err != nil {
+	if err := checkState(s); err != nil {
 		return nil, err
 	}
 	if s.state != nil {
@@ -211,6 +204,9 @@ func (s *RwkvState) CleanState(prompt ...string) (*RwkvState, error) {
 
 // Predict give current chat a response
 func (s *RwkvState) Predict(input string) (string, error) {
+	if err := checkState(s); err != nil {
+		return "", err
+	}
 	err := s.handelInput(input)
 	if err != nil {
 		return "", err
@@ -222,6 +218,10 @@ func (s *RwkvState) Predict(input string) (string, error) {
 // the embedding in rwkv is hidden state the len is n_emb*5*n_layer=46080.
 // So if distillation is true, we split len to n_emb = 768
 func (s *RwkvState) GetEmbedding(input string, distill bool) ([]float32, error) {
+	if err := checkState(s); err != nil {
+		return nil, err
+	}
+
 	encode, err := s.rwkvModel.tokenizer.Encode(input)
 
 	for _, token := range encode {
@@ -230,6 +230,7 @@ func (s *RwkvState) GetEmbedding(input string, distill bool) ([]float32, error) 
 			return nil, err
 		}
 	}
+
 	// we should keep state clean
 	nState := s.rwkvModel.cRwkv.RwkvGetStateLength(s.rwkvModel.ctx)
 	if distill {
@@ -242,6 +243,7 @@ func (s *RwkvState) GetEmbedding(input string, distill bool) ([]float32, error) 
 }
 
 func (s *RwkvState) PredictStream(input string, output chan string) {
+
 	go func() {
 		err := s.handelInput(input)
 		if err != nil {
@@ -255,6 +257,26 @@ func (s *RwkvState) PredictStream(input string, output chan string) {
 		})
 		close(output)
 	}()
+}
+
+func (s *RwkvState) SaveState() ([]float32, error) {
+	if err := checkState(s); err != nil {
+		return nil, err
+	}
+	return s.state, nil
+}
+
+func (s *RwkvState) LoadState(state []float32) error {
+	if err := checkState(s); err != nil {
+		return err
+	}
+
+	if len(state) != len(s.state) {
+		return errors.New("state length is not match")
+	}
+
+	s.state = state
+	return nil
 }
 
 func (s *RwkvState) handelInput(input string) error {
@@ -296,4 +318,34 @@ func (s *RwkvState) generateResponse(callback func(s string) bool) (string, erro
 		}
 	}
 	return responseText, nil
+}
+func hasCtx(ctx *RwkvCtx) error {
+	if ctx.ctx == 0 {
+		return errors.New("you must call LoadFromFile first")
+	}
+	return nil
+}
+
+func checkState(state *RwkvState) error {
+	if (state == nil) || (len(state.state) == 0) {
+		return errors.New("you must call InitState first")
+	}
+
+	if state.rwkvModel == nil {
+		return errors.New("you must call RwkvModel and InitState")
+	}
+	if err := hasCtx(state.rwkvModel.ctx); err != nil {
+		return err
+	}
+
+	rwkvStateLen := int(state.rwkvModel.cRwkv.RwkvGetStateLength(state.rwkvModel.ctx))
+	if len(state.state) != rwkvStateLen {
+		return errors.New("state length is not match,don't init state manually")
+	}
+
+	rwkvLogitsLen := int(state.rwkvModel.cRwkv.RwkvGetLogitsLength(state.rwkvModel.ctx))
+	if len(state.logits) != rwkvLogitsLen {
+		return errors.New("logits length is not match,don't init state manually")
+	}
+	return nil
 }
