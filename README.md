@@ -4,7 +4,7 @@ pure go for rwkv and support cross-platform.
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/seasonjs/rwkv.svg)](https://pkg.go.dev/github.com/seasonjs/rwkv)
 
-rwkv.go is a wrapper around [rwkv-cpp](https://github.com/saharNooby/rwkv.cpp), which is an adaption of ggml.cpp.
+rwkv.go is a wrapper around [rwkv.cpp](https://github.com/saharNooby/rwkv.cpp), which is an adaption of ggml.cpp.
 
 ## Installation
 
@@ -27,6 +27,19 @@ Click here to see your `Windows ROCM`  [architecture](https://rocm.docs.amd.com/
 | windows  | not support | support avx2/avx512/avx | not support | support GFX1100 | not support |
 | linux    | not support | support                 | not support | not support     | not support |
 | darwin   | not support | support                 | support     | not support     | not support |
+
+## AutoModel Dynamic Libraries Disclaimer
+
+#### The Source of dynamic Libraries
+These dynamic libraries come from [rwkv.cpp release](https://github.com/saharNooby/rwkv.cpp/releases), The dynamic library version can be obtained by viewing [rwkv.version file](./deps/rwkv.version)
+Currently, only `rwkv_hipBLAS_GFX1100.dll` and `librwkv_arm64.dylib` is built by myself.
+Anyone can check the consistency of the file by checksum the md5 of the file. 
+
+#### The Security Of Dynamic Libraries
+All I can say is that the creation of the dynamic library is public and does not contain any subjective malicious logic.
+If you are worried about the security of the dynamic library during the use process, you can build it yourself.
+
+**I and any author related to dynamic libraries do not assume any problems, responsibilities or legal liability during use.**
 
 ## Usage
 
