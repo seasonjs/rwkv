@@ -32,7 +32,7 @@ Windows NVIDIA GPU User may need check [cuda architecture](https://developer.nvi
 
 ## AutoModel Dynamic Libraries Disclaimer
 
-#### The Source of dynamic Libraries
+#### The Source Of Dynamic Libraries
 These dynamic libraries come from [rwkv.cpp release](https://github.com/saharNooby/rwkv.cpp/releases), The dynamic library version can be obtained by viewing [rwkv.version file](./deps/rwkv.version)
 Anyone can check the consistency of the file by checksum the md5 of the file. 
 
