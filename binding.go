@@ -4,6 +4,7 @@
 package rwkv
 
 import (
+	"errors"
 	"github.com/ebitengine/purego"
 	"unsafe"
 )
@@ -257,7 +258,7 @@ func (c *CRwkvImpl) RwkvGetPrintErrors(ctx *RwkvCtx) bool {
 func (c *CRwkvImpl) RwkvGetLastError(ctx *RwkvCtx) error {
 	cErr := c.cRwkvGetLastError(ctx.ctx)
 	err := RwkvErrors(cErr)
-	if err == RwkvErrorNone {
+	if errors.Is(err, RwkvErrorNone) {
 		return nil
 	}
 	return err

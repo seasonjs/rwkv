@@ -6,7 +6,7 @@ package rwkv
 import "testing"
 
 func TestGetGPUInfo(t *testing.T) {
-	info, err := GetGPUInfo()
+	info, err := getGPUInfo()
 	if err != nil {
 		return
 	}

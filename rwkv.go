@@ -156,7 +156,7 @@ func (m *RwkvModel) InitState(prompt ...string) (*RwkvState, error) {
 			}
 		}
 		tc := time.Since(startT)
-		log.Print("init state time cost: ", tc, "total tokens: ", len(encode))
+		log.Print("init state time cost: ", tc, " total tokens: ", len(encode))
 	}
 	return &RwkvState{
 		state:     state,

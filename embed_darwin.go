@@ -7,23 +7,17 @@ package rwkv
 
 import (
 	_ "embed" // Needed for go:embed
-	"runtime"
 )
 
-//go:embed deps/darwin/librwkv_x86.dylib
-var libRwkvAmd64 []byte
-
-//go:embed deps/darwin/librwkv_arm64.dylib
-var libRwkvArm []byte
+//go:embed deps/darwin/librwkv.dylib
+var libRwkv []byte
 
 var libName = "librwkv-*.dylib"
 
 func getDl(gpu bool) []byte {
 	if gpu {
-		_, _ = GetGPUInfo()
+		panic("Automatic loading of dynamic library failed, GPU Setting Not support darwin Now. Push request is welcome.")
 	}
-	if runtime.GOARCH == "amd64" {
-		return libRwkvAmd64
-	}
-	return libRwkvArm
+
+	return libRwkv
 }

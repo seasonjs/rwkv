@@ -112,11 +112,11 @@ func NewWorldTokenizer() (*WorldTokenizer, error) {
 			if strings.ContainsRune(token, utf8.RuneError) {
 				nonStandardToken++
 			}
-			log.Print("parse vocabulary to bytes fail,token index is:", index,
-				" token is: ", token,
-				", except length is: ", expectLen,
-				", parse length is: ", len(token),
-				", peek token bytes: ", []rune(token))
+			//log.Print("parse vocabulary to bytes fail,token index is:", index,
+			//	" token is: ", token,
+			//	", except length is: ", expectLen,
+			//	", parse length is: ", len(token),
+			//	", peek token bytes: ", []rune(token))
 		}
 		wt.IndexToToken[index] = token
 		wt.TokenToIndex[token] = index

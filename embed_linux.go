@@ -7,7 +7,6 @@ package rwkv
 
 import (
 	_ "embed" // Needed for go:embed
-	"runtime"
 )
 
 //go:embed deps/linux/librwkv.so
@@ -17,12 +16,8 @@ var libName = "librwkv-*.so"
 
 func getDl(gpu bool) []byte {
 	if gpu {
-		_, _ = GetGPUInfo()
-	}
-	if runtime.GOARCH == "amd64" {
-		return libRwkv
+		panic("Automatic loading of dynamic library failed, GPU Setting Not support linux Now. Push request is welcome.")
 	}
 
-	panic("Automatic loading of dynamic library failed, please use `NewRwkvModel` method load manually. ")
-	return nil
+	return libRwkv
 }

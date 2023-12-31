@@ -13,7 +13,7 @@ func getLibrary() string {
 	case "linux":
 		return "./deps/linux/librwkv.so"
 	case "windows":
-		return "./deps/windows/rwkv_avx2_x64.dll"
+		return "./deps/windows/rwkv_avx2.dll"
 	default:
 		panic(fmt.Errorf("GOOS=%s is not supported", runtime.GOOS))
 	}
@@ -162,7 +162,7 @@ func TestRwkvModel_QuantizeModelFile(t *testing.T) {
 func TestNewRwkvAutoModelGPU(t *testing.T) {
 	rwkv, err := NewRwkvAutoModel(RwkvOptions{
 		MaxTokens:     50,
-		StopString:    "\\n\\n",
+		StopString:    "\n\n",
 		Temperature:   0.8,
 		TopP:          0.5,
 		TokenizerType: World, //or World
